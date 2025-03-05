@@ -19,7 +19,8 @@ Persistent Base class for database CRUD functions
 """
 
 import logging
-from datetime import date
+
+# from datetime import date
 from .persistent_base import db, PersistentBase, DataValidationError
 from .orderitems import OrderItems
 

@@ -51,6 +51,6 @@ def create_order():
     order = Order()
     order.deserialize(request.get_json())
     order.create()
-    # message = order.serialize()
-    location_url = url_for("get_order_by_id", order_id=order.id, _external=True)
-    return location_url, status.HTTP_201_CREATED
+    message = order.serialize()
+    # location_url = url_for("get_order_by_id", order_id=order.id, _external=True)
+    return message, status.HTTP_201_CREATED
