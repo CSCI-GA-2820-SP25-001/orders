@@ -34,7 +34,7 @@ from service.common import status  # HTTP Status Codes
 def index():
     """Root URL response"""
     return (
-        "Reminder: return some useful information in json format about the service here",
+        "Reminder: matt needs to fix his git",
         status.HTTP_200_OK,
     )
 
