@@ -37,23 +37,27 @@ class Order(db.Model, PersistentBase):
 
     # Table Schema
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), nullable=False)
-    userid = db.Column(db.String(16), nullable=False)
-    email = db.Column(db.String(64), nullable=False)
-    phone_number = db.Column(db.String(32), nullable=True)  # phone number is optional
+    customer_id = db.Column(db.Integer, nullable=False)
+    order_status = db.Column(db.String(64), nullable=False)
+    order_created = db.Column(
+        db.DateTime, nullable=True, default=db.func.current_timestamp()
+    )
+    order_updated = db.Column(
+        db.DateTime, nullable=True, default=db.func.current_timestamp()
+    )
     orderitems = db.relationship("OrderItems", backref="order", passive_deletes=True)
 
     def __repr__(self):
-        return f"<Order {self.name} id=[{self.id}]>"
+        return f"<Order id={self.id}>"
 
     def serialize(self):
         """Converts an Order into a dictionary"""
         order = {
             "id": self.id,
-            "name": self.name,
-            "userid": self.userid,
-            "email": self.email,
-            "phone_number": self.phone_number,
+            "customer_id": self.customer_id,
+            "order_status": self.order_status,
+            "order_created": self.order_created,
+            "order_updated": self.order_updated,
             "orderitems": [],
         }
         for item in self.orderitems:
@@ -62,16 +66,16 @@ class Order(db.Model, PersistentBase):
 
     def deserialize(self, data):
         """
-        Populates an Account from a dictionary
+        Populates an Order from a dictionary
 
         Args:
             data (dict): A dictionary containing the resource data
         """
         try:
-            self.name = data["name"]
-            self.userid = data["userid"]
-            self.email = data["email"]
-            self.phone_number = data.get("phone_number")
+            self.customer_id = data["customer_id"]
+            self.order_status = data["order_status"]
+            self.order_created = data["order_created"]
+            self.order_updated = data["order_updated"]
             # handle inner list of items
             item_list = data.get("orderitems")
             for json_item in item_list:

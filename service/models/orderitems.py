@@ -37,11 +37,9 @@ class OrderItems(db.Model, PersistentBase):
     order_id = db.Column(
         db.Integer, db.ForeignKey("order.id", ondelete="CASCADE"), nullable=False
     )
-    name = db.Column(db.String(64))  # e.g., work, home, vacation, etc.
-    street = db.Column(db.String(64))
-    city = db.Column(db.String(64))
-    state = db.Column(db.String(2))
-    postal_code = db.Column(db.String(16))
+    product_id = db.Column(db.Integer, nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
         return f"<Item {self.name} id=[{self.id}] order[{self.order_id}]>"
@@ -56,11 +54,9 @@ class OrderItems(db.Model, PersistentBase):
         return {
             "id": self.id,
             "order_id": self.order_id,
-            "name": self.name,
-            "street": self.street,
-            "city": self.city,
-            "state": self.state,
-            "postal_code": self.postal_code,
+            "product_id": self.product_id,
+            "quantity": self.quantity,
+            "price": self.price,
         }
 
     def deserialize(self, data: dict) -> None:
@@ -72,11 +68,9 @@ class OrderItems(db.Model, PersistentBase):
         """
         try:
             self.order_id = data["order_id"]
-            self.name = data["name"]
-            self.street = data["street"]
-            self.city = data["city"]
-            self.state = data["state"]
-            self.postal_code = data["postal_code"]
+            self.product_id = data["product_id"]
+            self.quantity = data["quantity"]
+            self.price = data["price"]
         except AttributeError as error:
             raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:
