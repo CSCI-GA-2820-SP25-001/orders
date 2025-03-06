@@ -45,12 +45,6 @@ class OrderItemsFactory(factory.Factory):
     id = factory.Sequence(lambda n: n)
     product_id = factory.Sequence(lambda n: n)
     quantity = factory.Sequence(lambda n: n)
-    price = factory.Faker(
-        "random_number",
-        digits=2,
-        fix_len=False,
-        min=1.00,
-        max=20.00,
-    )
+    price = factory.Faker("random_number")
     order = factory.SubFactory(OrderFactory)
     order_id = factory.SelfAttribute("order.id")

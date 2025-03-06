@@ -94,13 +94,3 @@ class Order(db.Model, PersistentBase):
             ) from error
 
         return self
-
-    @classmethod
-    def find_by_name(cls, name):
-        """Returns all Orders with the given name
-
-        Args:
-            name (string): the name of the Orders you want to match
-        """
-        logger.info("Processing name query for %s ...", name)
-        return cls.query.filter(cls.name == name)

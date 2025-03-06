@@ -42,12 +42,10 @@ class OrderItems(db.Model, PersistentBase):
     price = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
-        return f"<Item {self.name} id=[{self.id}] order[{self.order_id}]>"
+        return f"<Item id=[{self.id}] order[{self.order_id}]>"
 
     def __str__(self):
-        return (
-            f"{self.name}: {self.street}, {self.city}, {self.state} {self.postal_code}"
-        )
+        return f"{self.id}: {self.product_id}, {self.quantity}, {self.price}"
 
     def serialize(self) -> dict:
         """Converts an Item into a dictionary"""
