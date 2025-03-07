@@ -20,10 +20,10 @@ YourResourceModel Service
 This service implements a REST API that allows you to Create, Read, Update
 and Delete YourResourceModel
 """
-
+import datetime
 from flask import jsonify, request, url_for, abort
 from flask import current_app as app  # Import Flask application
-from service.models import YourResourceModel
+from service.models import OrderItems, Order
 from service.common import status  # HTTP Status Codes
 
 
@@ -43,4 +43,48 @@ def index():
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
 
-# Todo: Place your REST API code here ...
+
+# CREATE AN ORDER
+@app.route("/orders", methods=["POST"])
+def create_order():
+    app.logger.info("Request to create an Order")
+    order = Order()
+
+    # Get the JSON from the request
+    orderjson = request.get_json()
+    # Set the created and updated time
+    orderjson["order_created"] = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    orderjson["order_updated"] = orderjson["order_created"]
+    # If orderitems is missing, set to empty array
+    if "orderitems" not in orderjson:
+        orderjson["orderitems"] = []
+
+    # Deserialize the data into a model and create in database
+    order.deserialize(orderjson)
+    order.create()
+    message = order.serialize()
+    return message, status.HTTP_201_CREATED
+
+
+# CREATE AN ORDER ITEM
+@app.route("/orders/<int:order_id>/items", methods=["POST"])
+def create_orderitem(order_id):
+    app.logger.info("Request to create an Order Item")
+
+    # Check if order_id exists if not exists, raise exception
+    order = Order.find(order_id)
+    if order is None:
+        abort(status.HTTP_404_NOT_FOUND)
+
+    orderitem = OrderItems()
+
+    # Get the JSON from the request
+    orderitemjson = request.get_json()
+    # Fill in the order_id
+    orderitemjson["order_id"] = order_id
+
+    # Deserialize the data into a model and create in database
+    orderitem.deserialize(orderitemjson)
+    orderitem.create()
+    message = orderitem.serialize()
+    return message, status.HTTP_201_CREATED
