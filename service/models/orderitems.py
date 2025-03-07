@@ -33,13 +33,13 @@ class OrderItems(db.Model, PersistentBase):
     """
 
     # Table Schema
-    id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(
+    id: int = db.Column(db.Integer, primary_key=True)
+    order_id: int = db.Column(
         db.Integer, db.ForeignKey("order.id", ondelete="CASCADE"), nullable=False
     )
-    product_id = db.Column(db.Integer, nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
-    price = db.Column(db.Float, nullable=False)
+    product_id: int = db.Column(db.Integer, nullable=False)
+    quantity: int = db.Column(db.Integer, nullable=False)
+    price: float = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
         return f"<Item id=[{self.id}] order[{self.order_id}]>"

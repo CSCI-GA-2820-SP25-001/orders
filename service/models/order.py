@@ -32,7 +32,7 @@ logger = logging.getLogger("flask.app")
 ######################################################################
 class Order(db.Model, PersistentBase):
     """
-    Class that represents an Account
+    Class that represents an Order
     """
 
     # Table Schema

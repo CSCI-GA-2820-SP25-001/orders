@@ -181,3 +181,13 @@ class TestOrderItem(TestCase):
         self.assertEqual(new_orderitem.product_id, orderitem.product_id)
         self.assertEqual(new_orderitem.quantity, orderitem.quantity)
         self.assertEqual(new_orderitem.price, orderitem.price)
+
+    def test_deserialize_an_orderitem_with_key_error(self):
+        """It should not deserialize an OrderItems with key error"""
+        orderitem = OrderItemsFactory()
+        orderitem.create()
+        serial_orderitem = orderitem.serialize()
+        del serial_orderitem["order_id"]
+        new_orderitem = OrderItems()
+        with self.assertRaises(DataValidationError):
+            new_orderitem.deserialize(serial_orderitem)

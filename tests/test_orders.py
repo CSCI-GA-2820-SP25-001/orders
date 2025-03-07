@@ -26,7 +26,7 @@ from unittest import TestCase
 from unittest.mock import patch
 from wsgi import app
 from service.models import Order, OrderItems, DataValidationError, db
-from tests.factories import OrderFactory
+from tests.factories import OrderFactory, OrderItemsFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/postgres"
@@ -173,16 +173,26 @@ class TestOrder(TestCase):
     def test_serialize_an_order(self):
         """It should Serialize an order"""
         order = OrderFactory()
+        orderitem = OrderItemsFactory(order=order)
         serial_order = order.serialize()
         self.assertEqual(serial_order["id"], order.id)
         self.assertEqual(serial_order["customer_id"], order.customer_id)
         self.assertEqual(serial_order["order_status"], order.order_status)
         self.assertEqual(serial_order["order_created"], order.order_created)
         self.assertEqual(serial_order["order_updated"], order.order_updated)
+        self.assertEqual(len(serial_order["orderitems"]), 1)
+        self.assertEqual(serial_order["orderitems"][0]["id"], orderitem.id)
+        self.assertEqual(serial_order["orderitems"][0]["order_id"], orderitem.order_id)
+        self.assertEqual(
+            serial_order["orderitems"][0]["product_id"], orderitem.product_id
+        )
+        self.assertEqual(serial_order["orderitems"][0]["price"], orderitem.price)
+        self.assertEqual(serial_order["orderitems"][0]["quantity"], orderitem.quantity)
 
     def test_deserialize_an_order(self):
         """It should Deserialize an order"""
         order = OrderFactory()
+        OrderItemsFactory(order=order)
         order.create()
         serial_order = order.serialize()
         new_order = Order()
@@ -191,6 +201,7 @@ class TestOrder(TestCase):
         self.assertEqual(new_order.order_status, order.order_status)
         self.assertEqual(new_order.order_created, order.order_created)
         self.assertEqual(new_order.order_updated, order.order_updated)
+        self.assertEqual(len(new_order.orderitems), 1)
 
     def test_deserialize_with_key_error(self):
         """It should not Deserialize an order with a KeyError"""
@@ -201,3 +212,13 @@ class TestOrder(TestCase):
         """It should not Deserialize an order with a TypeError"""
         order = Order()
         self.assertRaises(DataValidationError, order.deserialize, [])
+
+    def test_deserialize_orderitem_key_error(self):
+        """It should not Deserialize an order item with a KeyError"""
+        orderitem = OrderItems()
+        self.assertRaises(DataValidationError, orderitem.deserialize, {})
+
+    def test_deserialize_orderitem_type_error(self):
+        """It should not Deserialize an order item with a TypeError"""
+        orderitem = OrderItems()
+        self.assertRaises(DataValidationError, orderitem.deserialize, [])
