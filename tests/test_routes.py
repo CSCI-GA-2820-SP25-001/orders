@@ -23,7 +23,7 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
-from flask import jsonify, request, url_for, abort
+from service.routes import jsonify, request, url_for, abort
 from service.common import status
 from service.models import db, Order, OrderItems
 from .factories import OrderFactory
@@ -33,43 +33,6 @@ DATABASE_URI = os.getenv(
 )
 
 BASE_URL = "/orders"
-
-@app.route("/orders", methods=["GET"])
-def list_orders():
-    """Returns all of the Orders"""
-    app.logger.info("Request for order list")
-
-    orders = []
-
-    # Parse any arguments from the query string
-    category = request.args.get("category")
-    name = request.args.get("name")
-    available = request.args.get("available")
-    gender = request.args.get("gender")
-
-    if category:
-        app.logger.info("Find by category: %s", category)
-        orders = Order.find_by_category(category)
-    elif name:
-        app.logger.info("Find by name: %s", name)
-        orders = Order.find_by_name(name)
-    elif available:
-        app.logger.info("Find by available: %s", available)
-        # create bool from string
-        available_value = available.lower() in ["true", "yes", "1"]
-        orders = Order.find_by_availability(available_value)
-    elif gender:
-        app.logger.info("Find by gender: %s", gender)
-        # create enum from string
-        orders = Order.find_by_gender(Gender[gender.upper()])
-    else:
-        app.logger.info("Find all")
-        orders = Order.all()
-
-    results = [order.serialize() for order in orders]
-    app.logger.info("Returning %d orders", len(results))
-    return jsonify(results), status.HTTP_200_OK
-
 
 ######################################################################
 #  T E S T   C A S E S
