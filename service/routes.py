@@ -100,26 +100,15 @@ def list_orders():
     orders = []
 
     # Parse any arguments from the query string
-    category = request.args.get("category")
-    name = request.args.get("name")
-    available = request.args.get("available")
-    gender = request.args.get("gender")
+    customer_id = request.args.get("customer")
+    order_created = request.args.get("order_created")
 
-    if category:
-        app.logger.info("Find by category: %s", category)
-        orders = Order.find_by_category(category)
-    elif name:
-        app.logger.info("Find by name: %s", name)
-        orders = Order.find_by_name(name)
-    elif available:
-        app.logger.info("Find by available: %s", available)
-        # create bool from string
-        available_value = available.lower() in ["true", "yes", "1"]
-        orders = Order.find_by_availability(available_value)
-    elif gender:
-        app.logger.info("Find by gender: %s", gender)
-        # create enum from string
-        orders = Order.find_by_gender(Gender[gender.upper()])
+    if customer_id:
+        app.logger.info("Find by customer: %s", customer_id)
+        orders = Order.find_by_customer(customer_id)
+    elif order_created:
+        app.logger.info("Find by date order created: %s", order_created)
+        orders = Order.find_by_order_created(order_created) 
     else:
         app.logger.info("Find all")
         orders = Order.all()
