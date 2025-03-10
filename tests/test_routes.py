@@ -73,4 +73,71 @@ class TestYourResourceService(TestCase):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-    # Todo: Add your test cases here...
+    # Test create an order
+    def test_create_an_order(self):
+        """It should Create an Order and assert that it exists"""
+        order = {"order_status": "pending", "customer_id": 1}
+        # print("order: ", order)
+        resp = self.client.post("/orders", json=order)
+        print("resp: ", resp.json)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Check the data is correct
+        new_order = Order.find(resp.json["id"])
+        self.assertIsNotNone(new_order)
+        self.assertEqual(new_order.order_status, "pending")
+
+    def test_create_an_orderitem(self):
+        """It should Create an Order Items and assert that it exists"""
+        order = {
+            "order_status": "pending",
+            "customer_id": 1,
+        }
+        resp = self.client.post("/orders", json=order)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        order_id = resp.json["id"]
+
+        orderitem = {
+            "order_id": order_id,
+            "product_id": 1,
+            "price": 200,
+            "quantity": 1,
+        }
+        resp = self.client.post(f"/orders/{order_id}/items", json=orderitem)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Check the data is correct
+        new_orderitem = OrderItems.find(resp.json["id"])
+        self.assertIsNotNone(new_orderitem)
+        self.assertEqual(new_orderitem.price, 200)
+
+        new_order = Order.find(order_id)
+        self.assertIsNotNone(new_order)
+        self.assertEqual(new_order.orderitems[0].price, 200)
+
+        self.assertEqual(len(new_order.orderitems), 1)
+
+        orderitem = {
+            "order_id": order_id,
+            "product_id": 1,
+            "price": 200,
+            "quantity": 1,
+        }
+        resp = self.client.post(f"/orders/{order_id}/items", json=orderitem)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        new_order = Order.find(order_id)
+        self.assertIsNotNone(new_order)
+        self.assertEqual(len(new_order.orderitems), 2)
+
+        self.assertEqual(new_order.orderitems[1].price, 200)
+
+    def test_create_an_orderitem_nonexistent_order(self):
+        """It should not Create an Order Items for a non-existent order"""
+        orderitem = {
+            "product_id": 1,
+            "price": 200,
+            "quantity": 1,
+        }
+        resp = self.client.post("/orders/999/items", json=orderitem)
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
