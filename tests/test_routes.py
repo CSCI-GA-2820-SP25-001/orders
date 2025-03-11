@@ -34,6 +34,7 @@ DATABASE_URI = os.getenv(
 
 BASE_URL = "/orders"
 
+
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
@@ -78,12 +79,14 @@ class TestYourResourceService(TestCase):
             test_orders = OrderFactory()
             response = self.client.post(BASE_URL, json=test_orders.serialize())
             self.assertEqual(
-                response.status_code, status.HTTP_201_CREATED, "Could not create test order"
+                response.status_code,
+                status.HTTP_201_CREATED,
+                "Could not create test order",
             )
             new_order = response.get_json()
             test_orders.id = new_order["id"]
             orders.append(test_orders)
-        #return orders
+        return orders
 
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
@@ -163,7 +166,7 @@ class TestYourResourceService(TestCase):
         resp = self.client.post("/orders/999/items", json=orderitem)
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
-### List an order -- Matt ###
+    ### List an order -- Matt ###
 
     def test_get_order_list(self):
         """It should Get a list of Orders"""
@@ -172,3 +175,12 @@ class TestYourResourceService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(len(data), 5)
+
+    def test_get_order_list_by_customer_id(self):
+        """It should Get a list of Orders by customer_id"""
+        orders = self.create_order(5)
+        customer_id = orders[0].customer_id
+        response = self.client.get(BASE_URL + "?customer_id=" + str(customer_id))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertGreaterEqual(len(data), 1)
