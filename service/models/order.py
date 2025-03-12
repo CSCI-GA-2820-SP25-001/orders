@@ -94,3 +94,16 @@ class Order(db.Model, PersistentBase):
             ) from error
 
         return self
+
+
+     @classmethod
+     def find_by_customer(cls, customer_id):
+         """Returns all orders from the database with the given customer_id
+ 
+         Args:
+             customer_id (int): the customer_id of the orders to find
+ 
+         Returns:
+             a list of Order objects. Could be empty.
+         """
+         return cls.query.filter(cls.customer_id == customer_id).all()
