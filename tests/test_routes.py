@@ -31,9 +31,7 @@ from tests.factories import OrderFactory, OrderItemsFactory
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
-
 BASE_URL = "/orders"
-
 
 ######################################################################
 #  T E S T   C A S E S
@@ -166,6 +164,25 @@ class TestYourResourceService(TestCase):
         resp = self.client.post("/orders/999/items", json=orderitem)
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
+
+    # test read an order
+    def test_get_order(self):
+        """It should Get a single Order"""
+        # get the id of a order
+        test_order = self._create_orders(1)[0]
+        response = self.client.get(f"/orders/{test_order.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["name"], test_order.name)
+
+    def test_get_order_not_found(self):
+        """It should not Get a Order thats not found"""
+        response = self.client.get("/orders/0")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        data = response.get_json()
+        logging.debug("Response data = %s", data)
+        self.assertIn("was not found", data["message"])
+
     ### List an order -- Matt ###
 
     def test_get_order_list(self):
@@ -200,3 +217,4 @@ class TestYourResourceService(TestCase):
         """It should not Delete an Order that does not exist"""
         resp = self.client.delete("/orders/999")
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
