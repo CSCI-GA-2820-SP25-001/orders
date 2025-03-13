@@ -90,6 +90,7 @@ def create_orderitem(order_id):
     return message, status.HTTP_201_CREATED
 
 
+
 # Read an order
 @app.route("/orders/<int:order_id>", methods=["GET"])
 def get_orders(order_id):
@@ -107,3 +108,31 @@ def get_orders(order_id):
 
     app.logger.info("Returning order: %s", order.name)
     return jsonify(order.serialize()), status.HTTP_200_OK
+
+#CREATE A LIST OF ORDERS
+
+@app.route("/orders", methods=["GET"])
+def list_orders():
+    """Returns all of the Orders"""
+    app.logger.info("Request for order list")
+
+    orders = []
+
+    # Parse any arguments from the query string
+    customer_id = request.args.get("customer")
+    order_created = request.args.get("order_created")
+
+    if customer_id:
+        app.logger.info("Find by customer: %s", customer_id)
+        orders = Order.find_by_customer(customer_id)
+    elif order_created:
+        app.logger.info("Find by date order created: %s", order_created)
+        orders = Order.find_by_order_created(order_created) 
+    else:
+        app.logger.info("Find all")
+        orders = Order.all()
+
+    results = [order.serialize() for order in orders]
+    app.logger.info("Returning %d orders", len(results))
+    return jsonify(results), status.HTTP_200_OK
+
