@@ -134,6 +134,25 @@ def list_orders():
     return jsonify(results), status.HTTP_200_OK
 
 
+# DELETE AN ORDER ITEM
+@app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["DELETE"])
+def delete_orderitem(order_id, item_id):
+    app.logger.info("Request to delete an Order Item")
+
+    # Check if order_id exists if not exists, return 204
+    order = Order.find(order_id)
+    if order is None:
+        return "", status.HTTP_204_NO_CONTENT
+
+    # Check if orderitem_id exists if not exists, return 204
+    orderitem = OrderItems.find(item_id)
+    if orderitem is None:
+        return "", status.HTTP_204_NO_CONTENT
+
+    # Delete the Order Item
+    orderitem.delete()
+    return "", status.HTTP_204_NO_CONTENT
+
 # DELETE AN ORDER
 @app.route("/orders/<int:order_id>", methods=["DELETE"])
 def delete_order(order_id):
@@ -143,4 +162,5 @@ def delete_order(order_id):
         return "", status.HTTP_204_NO_CONTENT
     order.delete()
     return "", status.HTTP_204_NO_CONTENT
+
 
