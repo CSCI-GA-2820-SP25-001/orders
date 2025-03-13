@@ -33,6 +33,7 @@ DATABASE_URI = os.getenv(
 )
 BASE_URL = "/orders"
 
+
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
@@ -164,7 +165,6 @@ class TestYourResourceService(TestCase):
         resp = self.client.post("/orders/999/items", json=orderitem)
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
-
     # test read an order
     def test_get_order(self):
         """It should Get a single Order"""
@@ -173,7 +173,7 @@ class TestYourResourceService(TestCase):
         response = self.client.get(f"/orders/{test_order.id}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
-        self.assertEqual(data["name"], test_order.name)
+        self.assertEqual(data["order_status"], test_order.order_status)
 
     def test_get_order_not_found(self):
         """It should not Get a Order thats not found"""
@@ -259,4 +259,3 @@ class TestYourResourceService(TestCase):
         """It should not Delete an Order that does not exist"""
         resp = self.client.delete("/orders/999")
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
-
