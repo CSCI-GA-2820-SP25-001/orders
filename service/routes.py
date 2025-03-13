@@ -90,7 +90,8 @@ def create_orderitem(order_id):
     return message, status.HTTP_201_CREATED
 
 
-#CREATE A LIST OF ORDERS
+# CREATE A LIST OF ORDERS
+
 
 @app.route("/orders", methods=["GET"])
 def list_orders():
@@ -108,7 +109,7 @@ def list_orders():
         orders = Order.find_by_customer(customer_id)
     elif order_created:
         app.logger.info("Find by date order created: %s", order_created)
-        orders = Order.find_by_order_created(order_created) 
+        orders = Order.find_by_order_created(order_created)
     else:
         app.logger.info("Find all")
         orders = Order.all()
@@ -116,3 +117,23 @@ def list_orders():
     results = [order.serialize() for order in orders]
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
+
+
+# DELETE AN ORDER ITEM
+@app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["DELETE"])
+def delete_orderitem(order_id, item_id):
+    app.logger.info("Request to delete an Order Item")
+
+    # Check if order_id exists if not exists, return 204
+    order = Order.find(order_id)
+    if order is None:
+        return "", status.HTTP_204_NO_CONTENT
+
+    # Check if orderitem_id exists if not exists, return 204
+    orderitem = OrderItems.find(item_id)
+    if orderitem is None:
+        return "", status.HTTP_204_NO_CONTENT
+
+    # Delete the Order Item
+    orderitem.delete()
+    return "", status.HTTP_204_NO_CONTENT

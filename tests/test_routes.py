@@ -184,3 +184,45 @@ class TestYourResourceService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertGreaterEqual(len(data), 1)
+
+    def test_delete_an_orderitem(self):
+        """It should Delete an Order Items and assert that it no longer exists"""
+        order = {
+            "order_status": "pending",
+            "customer_id": 1,
+        }
+        resp = self.client.post("/orders", json=order)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        order_id = resp.json["id"]
+
+        orderitem = {
+            "order_id": order_id,
+            "product_id": 1,
+            "price": 200,
+            "quantity": 1,
+        }
+        resp = self.client.post(f"/orders/{order_id}/items", json=orderitem)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Check the data is correct
+        new_orderitem = OrderItems.find(resp.json["id"])
+
+        resp = self.client.delete(f"/orders/{order_id}/items/{new_orderitem.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_an_orderitem_nonexistent_order(self):
+        """It should not Delete an Order Items for a non-existent order"""
+        resp = self.client.delete("/orders/999/items/999")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_an_orderitem_nonexistent_orderitem(self):
+        """It should not Delete an Order Items for a non-existent orderitem"""
+
+        # Create an order using the factory
+        order = OrderFactory()
+        order.create()
+        # Get the order id
+        order_id = order.id
+
+        resp = self.client.delete("/orders/" + str(order_id) + "/items/999")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
