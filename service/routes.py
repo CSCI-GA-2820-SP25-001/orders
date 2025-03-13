@@ -135,7 +135,6 @@ def list_orders():
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
 
-
 # DELETE AN ORDER ITEM
 @app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["DELETE"])
 def delete_orderitem(order_id, item_id):
@@ -165,3 +164,60 @@ def delete_order(order_id):
         return "", status.HTTP_204_NO_CONTENT
     order.delete()
     return "", status.HTTP_204_NO_CONTENT
+
+### Update an order -- Juan ###
+
+
+@app.route("/orders/<int:order_id>", methods=["PUT"])
+def update_orders(order_id):
+    """
+    Update an Order
+
+    This endpoint will update an Order based the body that is posted
+    """
+    app.logger.info("Request to Update an order with id [%s]", order_id)
+    check_content_type("application/json")
+
+    # Attempt to find the Order and abort if not found
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    # Update the Order with the new data
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    order.deserialize(data)
+
+    # Save the updates to the database
+    order.update()
+
+    app.logger.info("Order with ID: %d updated.", order.id)
+    return jsonify(order.serialize()), status.HTTP_200_OK
+
+
+######################################################################
+#  U T I L I T Y   F U N C T I O N S
+######################################################################
+
+
+######################################################################
+# Checks the ContentType of a request
+######################################################################
+def check_content_type(content_type) -> None:
+    """Checks that the media type is correct"""
+    if "Content-Type" not in request.headers:
+        app.logger.error("No Content-Type specified.")
+        abort(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            f"Content-Type must be {content_type}",
+        )
+
+    if request.headers["Content-Type"] == content_type:
+        return
+
+    app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
+    abort(
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        f"Content-Type must be {content_type}",
+    )
+
