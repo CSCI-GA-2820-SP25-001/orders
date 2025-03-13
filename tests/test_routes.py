@@ -202,3 +202,19 @@ class TestYourResourceService(TestCase):
         data = response.get_json()
         self.assertGreaterEqual(len(data), 1)
 
+    def test_delete_an_order(self):
+        """It should Delete an Order"""
+        order = {"order_status": "pending", "customer_id": 1}
+        resp = self.client.post("/orders", json=order)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        order_id = resp.json["id"]
+        resp = self.client.delete(f"/orders/{order_id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        new_order = Order.find(order_id)
+        self.assertIsNone(new_order)
+
+    def test_delete_an_nonexistent_order(self):
+        """It should not Delete an Order that does not exist"""
+        resp = self.client.delete("/orders/999")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+

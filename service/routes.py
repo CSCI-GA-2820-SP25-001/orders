@@ -89,8 +89,6 @@ def create_orderitem(order_id):
     message = orderitem.serialize()
     return message, status.HTTP_201_CREATED
 
-
-
 # Read an order
 @app.route("/orders/<int:order_id>", methods=["GET"])
 def get_orders(order_id):
@@ -109,8 +107,7 @@ def get_orders(order_id):
     app.logger.info("Returning order: %s", order.name)
     return jsonify(order.serialize()), status.HTTP_200_OK
 
-#CREATE A LIST OF ORDERS
-
+#GET A LIST OF ORDERS
 @app.route("/orders", methods=["GET"])
 def list_orders():
     """Returns all of the Orders"""
@@ -127,7 +124,7 @@ def list_orders():
         orders = Order.find_by_customer(customer_id)
     elif order_created:
         app.logger.info("Find by date order created: %s", order_created)
-        orders = Order.find_by_order_created(order_created) 
+        orders = Order.find_by_order_created(order_created)
     else:
         app.logger.info("Find all")
         orders = Order.all()
@@ -135,4 +132,15 @@ def list_orders():
     results = [order.serialize() for order in orders]
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
+
+
+# DELETE AN ORDER
+@app.route("/orders/<int:order_id>", methods=["DELETE"])
+def delete_order(order_id):
+    app.logger.info("Request to delete an Order")
+    order = Order.find(order_id)
+    if order is None:
+        return "", status.HTTP_204_NO_CONTENT
+    order.delete()
+    return "", status.HTTP_204_NO_CONTENT
 
