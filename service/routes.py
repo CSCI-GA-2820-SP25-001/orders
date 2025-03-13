@@ -88,3 +88,22 @@ def create_orderitem(order_id):
     orderitem.create()
     message = orderitem.serialize()
     return message, status.HTTP_201_CREATED
+
+
+# Read an order
+@app.route("/orders/<int:order_id>", methods=["GET"])
+def get_orders(order_id):
+    """
+    Retrieve a single Order
+
+    This endpoint will return an Order based on it's id
+    """
+    app.logger.info("Request to Retrieve an order with id [%s]", order_id)
+
+    # Attempt to find the Order and abort if not found
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    app.logger.info("Returning order: %s", order.name)
+    return jsonify(order.serialize()), status.HTTP_200_OK
