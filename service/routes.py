@@ -90,9 +90,26 @@ def create_orderitem(order_id):
     return message, status.HTTP_201_CREATED
 
 
-# CREATE A LIST OF ORDERS
+# Read an order
+@app.route("/orders/<int:order_id>", methods=["GET"])
+def get_orders(order_id):
+    """
+    Retrieve a single Order
+
+    This endpoint will return an Order based on it's id
+    """
+    app.logger.info("Request to Retrieve an order with id [%s]", order_id)
+
+    # Attempt to find the Order and abort if not found
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    app.logger.info("Returning order: %s", order_id)
+    return jsonify(order.serialize()), status.HTTP_200_OK
 
 
+# GET A LIST OF ORDERS
 @app.route("/orders", methods=["GET"])
 def list_orders():
     """Returns all of the Orders"""
@@ -118,6 +135,35 @@ def list_orders():
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
 
+# DELETE AN ORDER ITEM
+@app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["DELETE"])
+def delete_orderitem(order_id, item_id):
+    app.logger.info("Request to delete an Order Item")
+
+    # Check if order_id exists if not exists, return 204
+    order = Order.find(order_id)
+    if order is None:
+        return "", status.HTTP_204_NO_CONTENT
+
+    # Check if orderitem_id exists if not exists, return 204
+    orderitem = OrderItems.find(item_id)
+    if orderitem is None:
+        return "", status.HTTP_204_NO_CONTENT
+
+    # Delete the Order Item
+    orderitem.delete()
+    return "", status.HTTP_204_NO_CONTENT
+
+
+# DELETE AN ORDER
+@app.route("/orders/<int:order_id>", methods=["DELETE"])
+def delete_order(order_id):
+    app.logger.info("Request to delete an Order")
+    order = Order.find(order_id)
+    if order is None:
+        return "", status.HTTP_204_NO_CONTENT
+    order.delete()
+    return "", status.HTTP_204_NO_CONTENT
 
 ### Update an order -- Juan ###
 
@@ -174,3 +220,4 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
+

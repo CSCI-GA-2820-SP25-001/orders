@@ -31,7 +31,6 @@ from tests.factories import OrderFactory, OrderItemsFactory
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
-
 BASE_URL = "/orders"
 
 
@@ -166,6 +165,24 @@ class TestYourResourceService(TestCase):
         resp = self.client.post("/orders/999/items", json=orderitem)
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
+    # test read an order
+    def test_get_order(self):
+        """It should Get a single Order"""
+        # get the id of a order
+        test_order = self._create_orders(1)[0]
+        response = self.client.get(f"/orders/{test_order.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["order_status"], test_order.order_status)
+
+    def test_get_order_not_found(self):
+        """It should not Get a Order thats not found"""
+        response = self.client.get("/orders/0")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        data = response.get_json()
+        logging.debug("Response data = %s", data)
+        self.assertIn("was not found", data["message"])
+
     ### List an order -- Matt ###
 
     def test_get_order_list(self):
@@ -185,8 +202,6 @@ class TestYourResourceService(TestCase):
         data = response.get_json()
         self.assertGreaterEqual(len(data), 1)
 
-    ### Update an order -- Juan ###
-
     def test_update_order(self):
         """It should Update an existing Order"""
         # create a order to update
@@ -202,3 +217,62 @@ class TestYourResourceService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         updated_order = response.get_json()
         self.assertEqual(updated_order["order_status"], "unknown")
+
+    def test_delete_an_orderitem(self):
+        """It should Delete an Order Items and assert that it no longer exists"""
+        order = {
+            "order_status": "pending",
+            "customer_id": 1,
+        }
+        resp = self.client.post("/orders", json=order)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        order_id = resp.json["id"]
+
+        orderitem = {
+            "order_id": order_id,
+            "product_id": 1,
+            "price": 200,
+            "quantity": 1,
+        }
+        resp = self.client.post(f"/orders/{order_id}/items", json=orderitem)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Check the data is correct
+        new_orderitem = OrderItems.find(resp.json["id"])
+
+        resp = self.client.delete(f"/orders/{order_id}/items/{new_orderitem.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_an_orderitem_nonexistent_order(self):
+        """It should not Delete an Order Items for a non-existent order"""
+        resp = self.client.delete("/orders/999/items/999")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_an_orderitem_nonexistent_orderitem(self):
+        """It should not Delete an Order Items for a non-existent orderitem"""
+
+        # Create an order using the factory
+        order = OrderFactory()
+        order.create()
+        # Get the order id
+        order_id = order.id
+
+        resp = self.client.delete("/orders/" + str(order_id) + "/items/999")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_an_order(self):
+        """It should Delete an Order"""
+        order = {"order_status": "pending", "customer_id": 1}
+        resp = self.client.post("/orders", json=order)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        order_id = resp.json["id"]
+        resp = self.client.delete(f"/orders/{order_id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+        new_order = Order.find(order_id)
+        self.assertIsNone(new_order)
+
+    def test_delete_an_nonexistent_order(self):
+        """It should not Delete an Order that does not exist"""
+        resp = self.client.delete("/orders/999")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
