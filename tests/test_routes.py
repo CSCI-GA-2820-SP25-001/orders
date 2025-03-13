@@ -184,3 +184,21 @@ class TestYourResourceService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertGreaterEqual(len(data), 1)
+
+    ### Update an order -- Juan ###
+
+    def test_update_order(self):
+        """It should Update an existing Order"""
+        # create a order to update
+        test_order = OrderFactory()
+        response = self.client.post(BASE_URL, json=test_order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # update the order
+        new_order = response.get_json()
+        logging.debug(new_order)
+        new_order["order_status"] = "unknown"
+        response = self.client.put(f"{BASE_URL}/{new_order['id']}", json=new_order)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated_order = response.get_json()
+        self.assertEqual(updated_order["order_status"], "unknown")
