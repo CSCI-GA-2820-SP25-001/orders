@@ -135,9 +135,10 @@ def list_orders():
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
 
+
 # DELETE AN ORDER ITEM
-@app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["DELETE"])
-def delete_orderitem(order_id, item_id):
+@app.route("/orders/<int:order_id>/items/<int:product_id>", methods=["DELETE"])
+def delete_orderitem(order_id, product_id):
     app.logger.info("Request to delete an Order Item")
 
     # Check if order_id exists if not exists, return 204
@@ -145,8 +146,8 @@ def delete_orderitem(order_id, item_id):
     if order is None:
         return "", status.HTTP_204_NO_CONTENT
 
-    # Check if orderitem_id exists if not exists, return 204
-    orderitem = OrderItems.find(item_id)
+    # Check if orderproduct_id exists if not exists, return 204
+    orderitem = OrderItems.find(product_id)
     if orderitem is None:
         return "", status.HTTP_204_NO_CONTENT
 
@@ -164,6 +165,7 @@ def delete_order(order_id):
         return "", status.HTTP_204_NO_CONTENT
     order.delete()
     return "", status.HTTP_204_NO_CONTENT
+
 
 ### Update an order -- Juan ###
 
@@ -195,6 +197,32 @@ def update_orders(order_id):
     return jsonify(order.serialize()), status.HTTP_200_OK
 
 
+# UPDATE AN ITEM IN AN ORDER
+@app.route("/orders/<int:order_id>/items/<int:id>", methods=["PUT"])
+def update_items(order_id, id):
+    """
+    Update an Item
+
+    This endpoint will update an Item based the body that is posted
+    """
+    app.logger.info("Request to update Item %s for Order id: %s", (id, order_id))
+    check_content_type("application/json")
+
+    # See if the item exists and abort if it doesn't
+    orderitem = OrderItems.find(id)
+    if not orderitem:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Item with id '{id}' could not be found.",
+        )
+
+    # Update from the json in the body of the request
+    orderitem.deserialize(request.get_json())
+    orderitem.update()
+
+    return jsonify(orderitem.serialize()), status.HTTP_200_OK
+
+
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
@@ -220,4 +248,3 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
-
