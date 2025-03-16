@@ -33,8 +33,13 @@ from service.common import status  # HTTP Status Codes
 @app.route("/")
 def index():
     """Root URL response"""
+    app.logger.info("Request for Root URL")
     return (
-        "WARNING: Return some useful information in json format about the service here",
+        jsonify(
+            name="Orders and Order Items REST API Service",
+            version="1.0",
+            paths=url_for("list_orders", _external=True),
+        ),
         status.HTTP_200_OK,
     )
 
@@ -42,6 +47,46 @@ def index():
 ######################################################################
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
+
+
+# Read an order item
+@app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["GET"])
+def get_orderitem(order_id, item_id):
+    """
+    Retrieve a single Order Item
+
+    This endpoint will return an Order Item based on it's id
+    """
+    app.logger.info("Request to Retrieve an order item with id [%s]", item_id)
+
+    # Attempt to find the Order Item and abort if not found
+    orderitem = OrderItems.find(item_id)
+    if not orderitem:
+        abort(
+            status.HTTP_404_NOT_FOUND, f"Order Item with id '{item_id}' was not found."
+        )
+
+    # Check if order_id exists if not exists, raise exception
+    order = Order.find(order_id)
+    if order is None:
+        abort(status.HTTP_404_NOT_FOUND)
+
+    # Check if the order_id in the path is the same as the order_id in the json
+    if orderitem.order_id != order_id:
+        app.logger.error(
+            "Path order_id: %s does not match json order_id: %s",
+            order_id,
+            orderitem.order_id,
+        )
+        print(
+            "Path order_id: %s does not match json order_id: %s",
+            order_id,
+            orderitem.order_id,
+        )
+        abort(status.HTTP_400_BAD_REQUEST)
+
+    app.logger.info("Returning order item: %s", item_id)
+    return jsonify(orderitem.serialize()), status.HTTP_200_OK
 
 
 # CREATE AN ORDER
@@ -197,6 +242,7 @@ def update_orders(order_id):
     return jsonify(order.serialize()), status.HTTP_200_OK
 
 
+
 # UPDATE AN ITEM IN AN ORDER
 @app.route("/orders/<int:order_id>/items/<int:id>", methods=["PUT"])
 def update_items(order_id, id):
@@ -221,6 +267,19 @@ def update_items(order_id, id):
     orderitem.update()
 
     return jsonify(orderitem.serialize()), status.HTTP_200_OK
+
+# GET A LIST OF ORDER ITEMS
+@app.route("/orders/<int:order_id>/items", methods=["GET"])
+def list_orderitems(order_id):
+    app.logger.info("Request for order item list")
+    order = Order.find(order_id)
+    if order is None:
+        return "", status.HTTP_204_NO_CONTENT
+    orderitems = OrderItems.find_by_order_id(order_id)
+    results = [orderitem.serialize() for orderitem in orderitems]
+    app.logger.info("Returning %d order items", len(results))
+    return jsonify(results), status.HTTP_200_OK
+
 
 
 ######################################################################
