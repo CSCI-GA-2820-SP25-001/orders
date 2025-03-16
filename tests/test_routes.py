@@ -276,3 +276,31 @@ class TestYourResourceService(TestCase):
         resp = self.client.delete("/orders/999")
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
+        # code juan, test list items order
+
+    def test_list_orderitems(self):
+        """It should List an Order's Items"""
+        order = self._create_orders(1)[0]
+        order_items = OrderItemsFactory.create_batch(2)
+
+        # Create Order Item 1
+        resp = self.client.post(
+            f"/orders/{order.id}/items", json=order_items[0].serialize()
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Create Order Item 2
+        resp = self.client.post(
+            f"/orders/{order.id}/items", json=order_items[1].serialize()
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.get(f"/orders/{order.id}/items")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 2)
+
+    def test_list_orderitems_nonexistent_order(self):
+        """It should not List an Order Items for a non-existent order"""
+        response = self.client.get("/orders/999/items")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
