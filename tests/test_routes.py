@@ -276,3 +276,19 @@ class TestYourResourceService(TestCase):
         resp = self.client.delete("/orders/999")
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
+    def test_wrong_content_type(self):
+        """It should return a 415 unsupported media type"""
+        headers = {"Content-Type": "text/plain"}
+        resp = self.client.post("/orders", data="order_status=pending", headers=headers)
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_no_content_type(self):
+        """It should return a 415 unsupported media type"""
+        resp = self.client.post("/orders", data="order_status=pending")
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_update_nonexistent_order(self):
+        """It should not Update an Order that does not exist"""
+        order = {"order_status": "pending", "customer_id": 1}
+        resp = self.client.put("/orders/999", json=order)
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
