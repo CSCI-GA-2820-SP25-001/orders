@@ -135,6 +135,7 @@ def list_orders():
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
 
+
 # DELETE AN ORDER ITEM
 @app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["DELETE"])
 def delete_orderitem(order_id, item_id):
@@ -164,6 +165,7 @@ def delete_order(order_id):
         return "", status.HTTP_204_NO_CONTENT
     order.delete()
     return "", status.HTTP_204_NO_CONTENT
+
 
 ### Update an order -- Juan ###
 
@@ -195,6 +197,19 @@ def update_orders(order_id):
     return jsonify(order.serialize()), status.HTTP_200_OK
 
 
+# GET A LIST OF ORDER ITEMS
+@app.route("/orders/<int:order_id>/items", methods=["GET"])
+def list_orderitems(order_id):
+    app.logger.info("Request for order item list")
+    order = Order.find(order_id)
+    if order is None:
+        return "", status.HTTP_204_NO_CONTENT
+    orderitems = OrderItems.find_by_order_id(order_id)
+    results = [orderitem.serialize() for orderitem in orderitems]
+    app.logger.info("Returning %d order items", len(results))
+    return jsonify(results), status.HTTP_200_OK
+
+
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
@@ -220,4 +235,3 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
-
