@@ -342,6 +342,12 @@ class TestYourResourceService(TestCase):
         logging.debug(data)
         id = data["id"]
         order_id = data["order_id"]
+        data = {
+            "order_id": order_id,
+            "product_id": 1,
+            "price": 1,
+            "quantity": 201,
+        }
 
         # send the update back
         resp = self.client.put(
@@ -362,7 +368,7 @@ class TestYourResourceService(TestCase):
         logging.debug(data)
         self.assertEqual(data["order_id"], order_id)
         self.assertEqual(data["product_id"], 1)
-        self.assertEqual(data["quantity"], 200)
+        self.assertEqual(data["quantity"], 201)
         self.assertEqual(data["price"], 1)
 
         # code juan, test list items order
