@@ -33,8 +33,13 @@ from service.common import status  # HTTP Status Codes
 @app.route("/")
 def index():
     """Root URL response"""
+    app.logger.info("Request for Root URL")
     return (
-        "WARNING: Return some useful information in json format about the service here",
+        jsonify(
+            name="Orders and Order Items REST API Service",
+            version="1.0",
+            paths=url_for("list_orders", _external=True),
+        ),
         status.HTTP_200_OK,
     )
 
@@ -90,7 +95,8 @@ def create_orderitem(order_id):
     return message, status.HTTP_201_CREATED
 
 
-#CREATE A LIST OF ORDERS
+# CREATE A LIST OF ORDERS
+
 
 @app.route("/orders", methods=["GET"])
 def list_orders():
@@ -108,7 +114,7 @@ def list_orders():
         orders = Order.find_by_customer(customer_id)
     elif order_created:
         app.logger.info("Find by date order created: %s", order_created)
-        orders = Order.find_by_order_created(order_created) 
+        orders = Order.find_by_order_created(order_created)
     else:
         app.logger.info("Find all")
         orders = Order.all()
