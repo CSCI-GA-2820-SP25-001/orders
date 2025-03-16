@@ -145,6 +145,7 @@ class TestYourResourceService(TestCase):
         self.assertIsNotNone(new_order)
         self.assertEqual(new_order.order_status, "pending")
 
+    # Test Create an item in an order
     def test_create_an_orderitem(self):
         """It should Create an Order Items and assert that it exists"""
         order = {
@@ -237,6 +238,7 @@ class TestYourResourceService(TestCase):
         data = response.get_json()
         self.assertGreaterEqual(len(data), 1)
 
+    # Test update an order
     def test_update_order(self):
         """It should Update an existing Order"""
         # create a order to update
@@ -253,6 +255,7 @@ class TestYourResourceService(TestCase):
         updated_order = response.get_json()
         self.assertEqual(updated_order["order_status"], "unknown")
 
+    # Test delete an item in an order
     def test_delete_an_orderitem(self):
         """It should Delete an Order Items and assert that it no longer exists"""
         order = {
@@ -295,6 +298,7 @@ class TestYourResourceService(TestCase):
         resp = self.client.delete("/orders/" + str(order_id) + "/items/999")
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
+    # Test delete an order
     def test_delete_an_order(self):
         """It should Delete an Order"""
         order = {"order_status": "pending", "customer_id": 1}
@@ -310,6 +314,57 @@ class TestYourResourceService(TestCase):
         """It should not Delete an Order that does not exist"""
         resp = self.client.delete("/orders/999")
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+
+    # Test Update Item Within an Order
+    def test_update_item(self):
+        """It should Update an item on an order"""
+        # create a known order
+        order = {
+            "order_status": "pending",
+            "customer_id": 1,
+        }
+        resp = self.client.post("/orders", json=order)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        order_id = resp.json["id"]
+
+        # create an order item
+        orderitem = {
+            "order_id": order_id,
+            "product_id": 1,
+            "price": 200,
+            "quantity": 1,
+        }
+        resp = self.client.post(f"/orders/{order_id}/items", json=orderitem)
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # get the created item details
+        data = resp.get_json()
+        logging.debug(data)
+        id = data["id"]
+        order_id = data["order_id"]
+
+        # send the update back
+        resp = self.client.put(
+            f"/orders/{order_id}/items/{id}",
+            json=data,
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # retrieve it back
+        resp = self.client.get(
+            f"/orders/{order_id}/items/{id}",
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        logging.debug(data)
+        self.assertEqual(data["order_id"], order_id)
+        self.assertEqual(data["product_id"], 1)
+        self.assertEqual(data["quantity"], 200)
+        self.assertEqual(data["price"], 1)
 
         # code juan, test list items order
 
@@ -339,3 +394,4 @@ class TestYourResourceService(TestCase):
         """It should not List an Order Items for a non-existent order"""
         response = self.client.get("/orders/999/items")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
