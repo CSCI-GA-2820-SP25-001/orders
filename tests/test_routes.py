@@ -321,3 +321,11 @@ class TestYourResourceService(TestCase):
         order = {"order_status": "pending", "customer_id": 1}
         resp = self.client.put("/orders/999", json=order)
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_no_content_type_get(self):
+        """It should return a 415 unsupported media type"""
+        order = OrderFactory()
+        resp = self.client.post(
+            "/orders", data=order.serialize(), headers={"Content-Type": None}
+        )
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
