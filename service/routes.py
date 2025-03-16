@@ -93,6 +93,7 @@ def get_orderitem(order_id, item_id):
 @app.route("/orders", methods=["POST"])
 def create_order():
     app.logger.info("Request to create an Order")
+    check_content_type("application/json")
     order = Order()
 
     # Get the JSON from the request
@@ -164,14 +165,10 @@ def list_orders():
 
     # Parse any arguments from the query string
     customer_id = request.args.get("customer")
-    order_created = request.args.get("order_created")
 
     if customer_id:
         app.logger.info("Find by customer: %s", customer_id)
         orders = Order.find_by_customer(customer_id)
-    elif order_created:
-        app.logger.info("Find by date order created: %s", order_created)
-        orders = Order.find_by_order_created(order_created)
     else:
         app.logger.info("Find all")
         orders = Order.all()

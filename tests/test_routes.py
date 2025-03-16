@@ -315,7 +315,6 @@ class TestYourResourceService(TestCase):
         resp = self.client.delete("/orders/999")
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
-
     # Test Update Item Within an Order
     def test_update_item(self):
         """It should Update an item on an order"""
@@ -343,6 +342,12 @@ class TestYourResourceService(TestCase):
         logging.debug(data)
         id = data["id"]
         order_id = data["order_id"]
+        data = {
+            "order_id": order_id,
+            "product_id": 1,
+            "price": 1,
+            "quantity": 201,
+        }
 
         # send the update back
         resp = self.client.put(
@@ -363,7 +368,7 @@ class TestYourResourceService(TestCase):
         logging.debug(data)
         self.assertEqual(data["order_id"], order_id)
         self.assertEqual(data["product_id"], 1)
-        self.assertEqual(data["quantity"], 200)
+        self.assertEqual(data["quantity"], 201)
         self.assertEqual(data["price"], 1)
 
         # code juan, test list items order
@@ -395,3 +400,27 @@ class TestYourResourceService(TestCase):
         response = self.client.get("/orders/999/items")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
+    def test_wrong_content_type(self):
+        """It should return a 415 unsupported media type"""
+        headers = {"Content-Type": "text/plain"}
+        resp = self.client.post("/orders", data="order_status=pending", headers=headers)
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_no_content_type(self):
+        """It should return a 415 unsupported media type"""
+        resp = self.client.post("/orders", data="order_status=pending")
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_update_nonexistent_order(self):
+        """It should not Update an Order that does not exist"""
+        order = {"order_status": "pending", "customer_id": 1}
+        resp = self.client.put("/orders/999", json=order)
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_no_content_type_get(self):
+        """It should return a 415 unsupported media type"""
+        order = OrderFactory()
+        resp = self.client.post(
+            "/orders", data=order.serialize(), headers={"Content-Type": None}
+        )
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
