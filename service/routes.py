@@ -95,9 +95,26 @@ def create_orderitem(order_id):
     return message, status.HTTP_201_CREATED
 
 
-# CREATE A LIST OF ORDERS
+# Read an order
+@app.route("/orders/<int:order_id>", methods=["GET"])
+def get_orders(order_id):
+    """
+    Retrieve a single Order
+
+    This endpoint will return an Order based on it's id
+    """
+    app.logger.info("Request to Retrieve an order with id [%s]", order_id)
+
+    # Attempt to find the Order and abort if not found
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    app.logger.info("Returning order: %s", order_id)
+    return jsonify(order.serialize()), status.HTTP_200_OK
 
 
+# GET A LIST OF ORDERS
 @app.route("/orders", methods=["GET"])
 def list_orders():
     """Returns all of the Orders"""
@@ -122,3 +139,104 @@ def list_orders():
     results = [order.serialize() for order in orders]
     app.logger.info("Returning %d orders", len(results))
     return jsonify(results), status.HTTP_200_OK
+
+
+# DELETE AN ORDER ITEM
+@app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["DELETE"])
+def delete_orderitem(order_id, item_id):
+    app.logger.info("Request to delete an Order Item")
+
+    # Check if order_id exists if not exists, return 204
+    order = Order.find(order_id)
+    if order is None:
+        return "", status.HTTP_204_NO_CONTENT
+
+    # Check if orderitem_id exists if not exists, return 204
+    orderitem = OrderItems.find(item_id)
+    if orderitem is None:
+        return "", status.HTTP_204_NO_CONTENT
+
+    # Delete the Order Item
+    orderitem.delete()
+    return "", status.HTTP_204_NO_CONTENT
+
+
+# DELETE AN ORDER
+@app.route("/orders/<int:order_id>", methods=["DELETE"])
+def delete_order(order_id):
+    app.logger.info("Request to delete an Order")
+    order = Order.find(order_id)
+    if order is None:
+        return "", status.HTTP_204_NO_CONTENT
+    order.delete()
+    return "", status.HTTP_204_NO_CONTENT
+
+
+### Update an order -- Juan ###
+
+
+@app.route("/orders/<int:order_id>", methods=["PUT"])
+def update_orders(order_id):
+    """
+    Update an Order
+
+    This endpoint will update an Order based the body that is posted
+    """
+    app.logger.info("Request to Update an order with id [%s]", order_id)
+    check_content_type("application/json")
+
+    # Attempt to find the Order and abort if not found
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    # Update the Order with the new data
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    order.deserialize(data)
+
+    # Save the updates to the database
+    order.update()
+
+    app.logger.info("Order with ID: %d updated.", order.id)
+    return jsonify(order.serialize()), status.HTTP_200_OK
+
+
+# GET A LIST OF ORDER ITEMS
+@app.route("/orders/<int:order_id>/items", methods=["GET"])
+def list_orderitems(order_id):
+    app.logger.info("Request for order item list")
+    order = Order.find(order_id)
+    if order is None:
+        return "", status.HTTP_204_NO_CONTENT
+    orderitems = OrderItems.find_by_order_id(order_id)
+    results = [orderitem.serialize() for orderitem in orderitems]
+    app.logger.info("Returning %d order items", len(results))
+    return jsonify(results), status.HTTP_200_OK
+
+
+######################################################################
+#  U T I L I T Y   F U N C T I O N S
+######################################################################
+
+
+######################################################################
+# Checks the ContentType of a request
+######################################################################
+def check_content_type(content_type) -> None:
+    """Checks that the media type is correct"""
+    if "Content-Type" not in request.headers:
+        app.logger.error("No Content-Type specified.")
+        abort(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            f"Content-Type must be {content_type}",
+        )
+
+    if request.headers["Content-Type"] == content_type:
+        return
+
+    app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
+    abort(
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        f"Content-Type must be {content_type}",
+    )
