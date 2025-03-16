@@ -3,31 +3,11 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Language-Python-blue.svg)](https://python.org/)
 
-This is a skeleton you can use to start your projects.
-
-**Note:** _Feel free to overwrite this `README.md` file with the one that describes your project._
 
 ## Overview
 
-This project template contains starter code for your class project. The `/service` folder contains your `models.py` file for your model and a `routes.py` file for your service. The `/tests` folder has test case starter code for testing the model and the service separately. All you need to do is add your functionality. You can use the [lab-flask-tdd](https://github.com/nyu-devops/lab-flask-tdd) for code examples to copy from.
+This repo contains code for the orders microservice. The `/service` folder contains `models.py` file for our model and a `routes.py` file for our service. The `/tests` folder has test cases for testing the model and the service separately.
 
-## Automatic Setup
-
-The best way to use this repo is to start your own repo using it as a git template. To do this just press the green **Use this template** button in GitHub and this will become the source for your repository.
-
-## Manual Setup
-
-You can also clone this repository and then copy and paste the starter code into your project repo folder on your local computer. Be careful not to copy over your own `README.md` file so be selective in what you copy.
-
-There are 4 hidden files that you will need to copy manually if you use the Mac Finder or Windows Explorer to copy files from this folder into your repo folder.
-
-These should be copied using a bash shell as follows:
-
-```bash
-    cp .gitignore  ../<your_repo_folder>/
-    cp .flaskenv ../<your_repo_folder>/
-    cp .gitattributes ../<your_repo_folder>/
-```
 
 ## Contents
 
@@ -58,6 +38,41 @@ tests/                     - test cases package
 ├── test_cli_commands.py   - test suite for the CLI
 ├── test_models.py         - test suite for business models
 └── test_routes.py         - test suite for service routes
+
+## Database
+
+Data for our orders will be compiled in a PostgreSQL database, under the table name "order" located in models/models.py. Features and accepted entries are as follows:
+
+id (Integer)
+customer_id (Integer)
+order_status (String)
+order_created (Datetime)
+order_updated (Datetime)
+orderitems (Unbounded)
+
+
+## Functionalities
+
+The following functionalities detail actions users can take when interacting with the orders microservice portion of the website. Functionalities can be found under models/routes.py, and corresponding tests can be found under tests/test_routes.py.
+
+REST API Endpoints:
+
+get_orderitem (Return an Order Item based on its id)
+create_order (Create an order)
+create_orderitem (Create an item within an order)
+get_orders (Return an order based on its id)
+list_orders (Return a list of all orders)
+delete_orderitem (Delete an item from an order)
+delete_order (Delete an order)
+update_orders (Update an order)
+update_items (Update an item in an order)
+list_orderitems (Return a list of all items in a given order)
+
+Utility Functions:
+
+check_content_type (Checks that the media type is correct)
+
+
 ```
 
 ## License
