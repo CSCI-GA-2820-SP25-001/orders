@@ -81,3 +81,9 @@ class OrderItems(db.Model, PersistentBase):
             ) from error
 
         return self
+
+    # code juan we are creating a new class method to list items in an order
+
+    @classmethod
+    def find_by_order_id(cls, order_id: int):
+        return cls.query.filter_by(order_id=order_id).all()
