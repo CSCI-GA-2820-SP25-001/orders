@@ -91,6 +91,38 @@ class TestYourResourceService(TestCase):
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
 
+    # Test for item in order
+
+    def test_read_an_orderitem(self):
+        """It should Read an Order Items and assert that it exists"""
+        orderitem = OrderItemsFactory()
+        orderitem.create()
+        orderitem_id = orderitem.id
+        order_id = orderitem.order_id
+
+        resp = self.client.get(f"/orders/{order_id}/items/{orderitem_id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["id"], orderitem_id)
+
+    def test_read_an_orderitem_nonexistent_order(self):
+        """It should not Read an Order Items for a non-existent order"""
+        orderitem = OrderItemsFactory()
+        orderitem.create()
+        orderitem_id = orderitem.id
+
+        resp = self.client.get("/orders/999/items/" + str(orderitem_id))
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_read_an_orderitem_nonexistent_orderitem(self):
+        """It should not Read an Order Items for a non-existent orderitem"""
+        orderitem = OrderItemsFactory()
+        orderitem.create()
+        order_id = orderitem.order_id
+
+        resp = self.client.get("/orders/" + str(order_id) + "/items/999")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
     # Test update root url
     def test_index(self):
         """It should call the Home Page"""
