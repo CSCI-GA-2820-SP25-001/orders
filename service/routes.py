@@ -186,16 +186,16 @@ def delete_orderitem(order_id, product_id):
     # Check if order_id exists if not exists, return 204
     order = Order.find(order_id)
     if order is None:
-        return "", status.HTTP_204_NO_CONTENT
+        return {}, status.HTTP_204_NO_CONTENT
 
     # Check if orderproduct_id exists if not exists, return 204
     orderitem = OrderItems.find(product_id)
     if orderitem is None:
-        return "", status.HTTP_204_NO_CONTENT
+        return {}, status.HTTP_204_NO_CONTENT
 
     # Delete the Order Item
     orderitem.delete()
-    return "", status.HTTP_204_NO_CONTENT
+    return {}, status.HTTP_204_NO_CONTENT
 
 
 # DELETE AN ORDER
@@ -206,7 +206,7 @@ def delete_order(order_id):
     if order is None:
         return "", status.HTTP_204_NO_CONTENT
     order.delete()
-    return "", status.HTTP_204_NO_CONTENT
+    return {}, status.HTTP_204_NO_CONTENT
 
 
 ### Update an order -- Juan ###
@@ -239,7 +239,6 @@ def update_orders(order_id):
     return jsonify(order.serialize()), status.HTTP_200_OK
 
 
-
 # UPDATE AN ITEM IN AN ORDER
 @app.route("/orders/<int:order_id>/items/<int:id>", methods=["PUT"])
 def update_items(order_id, id):
@@ -265,6 +264,7 @@ def update_items(order_id, id):
 
     return jsonify(orderitem.serialize()), status.HTTP_200_OK
 
+
 # GET A LIST OF ORDER ITEMS
 @app.route("/orders/<int:order_id>/items", methods=["GET"])
 def list_orderitems(order_id):
@@ -276,7 +276,6 @@ def list_orderitems(order_id):
     results = [orderitem.serialize() for orderitem in orderitems]
     app.logger.info("Returning %d order items", len(results))
     return jsonify(results), status.HTTP_200_OK
-
 
 
 ######################################################################
