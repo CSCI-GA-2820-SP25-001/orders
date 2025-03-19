@@ -14,7 +14,7 @@
 					"pytest",
 					"pipenv",
 					"tekton",
-					"testdb"			
+					"testdb",			
 					"creds",
 					"virtualenvs",
 					"shopcarts"
@@ -68,7 +68,8 @@
 				"inercia.vscode-k3d",
 				"ms-kubernetes-tools.vscode-kubernetes-tools",
 				"streetsidesoftware.code-spell-checker",
-				"bbenoist.vagrant"
+				"bbenoist.vagrant",
+				"unjinjang.rest-api-client"
 			]
 		}
 	},
