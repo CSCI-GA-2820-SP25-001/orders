@@ -23,7 +23,6 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
-from service.routes import jsonify, request, url_for, abort
 from service.common import status
 from service.models import db, Order, OrderItems
 from tests.factories import OrderFactory, OrderItemsFactory
@@ -219,7 +218,7 @@ class TestYourResourceService(TestCase):
         logging.debug("Response data = %s", data)
         self.assertIn("was not found", data["message"])
 
-    ### List an order -- Matt ###
+    # List an order -- Matt #
 
     def test_get_order_list(self):
         """It should Get a list of Orders"""

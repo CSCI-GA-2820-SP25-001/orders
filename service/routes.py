@@ -209,7 +209,7 @@ def delete_order(order_id):
     return {}, status.HTTP_204_NO_CONTENT
 
 
-### Update an order -- Juan ###
+# Update an order -- Juan #
 
 
 @app.route("/orders/<int:order_id>", methods=["PUT"])

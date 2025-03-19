@@ -3,10 +3,8 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
-from service.routes import jsonify, request, url_for, abort
 from service.common import status
 from service.models import db, Order, OrderItems
-from tests.factories import OrderFactory, OrderItemsFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
