@@ -92,6 +92,11 @@ def get_orderitem(order_id, item_id):
 # CREATE AN ORDER
 @app.route("/orders", methods=["POST"])
 def create_order():
+    """
+    Create an Order
+
+    This endpoint will create an Order based the data in the body that is posted
+    """
     app.logger.info("Request to create an Order")
     check_content_type("application/json")
     order = Order()
@@ -115,6 +120,11 @@ def create_order():
 # CREATE AN ORDER ITEM
 @app.route("/orders/<int:order_id>/items", methods=["POST"])
 def create_orderitem(order_id):
+    """
+    Create an Order Item
+
+    This endpoint will create an Order Item based the data in the body that is posted
+    """
     app.logger.info("Request to create an Order Item")
 
     # Check if order_id exists if not exists, raise exception
@@ -181,6 +191,18 @@ def list_orders():
 # DELETE AN ORDER ITEM
 @app.route("/orders/<int:order_id>/items/<int:product_id>", methods=["DELETE"])
 def delete_orderitem(order_id, product_id):
+    """
+    Delete an Order Item
+
+    This endpoint will delete an Order Item based the id specified in the path
+
+    Args:
+        order_id (int): the id of the order to delete
+        product_id (int): the id of the order item to delete
+
+    Returns:
+        status: 204 No Content
+    """
     app.logger.info("Request to delete an Order Item")
 
     # Check if order_id exists if not exists, return 204
@@ -201,6 +223,17 @@ def delete_orderitem(order_id, product_id):
 # DELETE AN ORDER
 @app.route("/orders/<int:order_id>", methods=["DELETE"])
 def delete_order(order_id):
+    """
+    Delete an Order
+
+    This endpoint will delete an Order based the id specified in the path
+
+    Args:
+        order_id (int): the id of the order to delete
+
+    Returns:
+        status: HTTP_204_NO_CONTENT
+    """
     app.logger.info("Request to delete an Order")
     order = Order.find(order_id)
     if order is None:
@@ -209,7 +242,7 @@ def delete_order(order_id):
     return {}, status.HTTP_204_NO_CONTENT
 
 
-### Update an order -- Juan ###
+# Update an order -- Juan #
 
 
 @app.route("/orders/<int:order_id>", methods=["PUT"])
@@ -240,22 +273,22 @@ def update_orders(order_id):
 
 
 # UPDATE AN ITEM IN AN ORDER
-@app.route("/orders/<int:order_id>/items/<int:id>", methods=["PUT"])
-def update_items(order_id, id):
+@app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["PUT"])
+def update_items(order_id, item_id):
     """
     Update an Item
 
     This endpoint will update an Item based the body that is posted
     """
-    app.logger.info("Request to update Item %s for Order id: %s", (id, order_id))
+    app.logger.info("Request to update Item %s for Order id: %s", (item_id, order_id))
     check_content_type("application/json")
 
     # See if the item exists and abort if it doesn't
-    orderitem = OrderItems.find(id)
+    orderitem = OrderItems.find(item_id)
     if not orderitem:
         abort(
             status.HTTP_404_NOT_FOUND,
-            f"Item with id '{id}' could not be found.",
+            f"Item with id '{item_id}' could not be found.",
         )
 
     # Update from the json in the body of the request
@@ -268,6 +301,14 @@ def update_items(order_id, id):
 # GET A LIST OF ORDER ITEMS
 @app.route("/orders/<int:order_id>/items", methods=["GET"])
 def list_orderitems(order_id):
+    """
+    Retrieve a list of Order Items for a given order
+
+    This endpoint will return all items associated with a specific order
+    identified by the order_id in the URL path. If the order does not exist,
+    a status of 204 (No Content) will be returned.
+    """
+
     app.logger.info("Request for order item list")
     order = Order.find(order_id)
     if order is None:

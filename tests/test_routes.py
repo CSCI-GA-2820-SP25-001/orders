@@ -23,7 +23,6 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
-from service.routes import jsonify, request, url_for, abort
 from service.common import status
 from service.models import db, Order, OrderItems
 from tests.factories import OrderFactory, OrderItemsFactory
@@ -219,7 +218,7 @@ class TestYourResourceService(TestCase):
         logging.debug("Response data = %s", data)
         self.assertIn("was not found", data["message"])
 
-    ### List an order -- Matt ###
+    # List an order -- Matt #
 
     def test_get_order_list(self):
         """It should Get a list of Orders"""
@@ -340,7 +339,7 @@ class TestYourResourceService(TestCase):
         # get the created item details
         data = resp.get_json()
         logging.debug(data)
-        id = data["id"]
+        item_id = data["id"]
         order_id = data["order_id"]
         data = {
             "order_id": order_id,
@@ -351,7 +350,7 @@ class TestYourResourceService(TestCase):
 
         # send the update back
         resp = self.client.put(
-            f"/orders/{order_id}/items/{id}",
+            f"/orders/{order_id}/items/{item_id}",
             json=data,
             content_type="application/json",
         )
@@ -359,7 +358,7 @@ class TestYourResourceService(TestCase):
 
         # retrieve it back
         resp = self.client.get(
-            f"/orders/{order_id}/items/{id}",
+            f"/orders/{order_id}/items/{item_id}",
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
