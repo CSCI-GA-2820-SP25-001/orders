@@ -339,7 +339,7 @@ class TestYourResourceService(TestCase):
         # get the created item details
         data = resp.get_json()
         logging.debug(data)
-        id = data["id"]
+        item_id = data["id"]
         order_id = data["order_id"]
         data = {
             "order_id": order_id,
@@ -350,7 +350,7 @@ class TestYourResourceService(TestCase):
 
         # send the update back
         resp = self.client.put(
-            f"/orders/{order_id}/items/{id}",
+            f"/orders/{order_id}/items/{item_id}",
             json=data,
             content_type="application/json",
         )
@@ -358,7 +358,7 @@ class TestYourResourceService(TestCase):
 
         # retrieve it back
         resp = self.client.get(
-            f"/orders/{order_id}/items/{id}",
+            f"/orders/{order_id}/items/{item_id}",
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)

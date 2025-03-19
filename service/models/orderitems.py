@@ -86,4 +86,13 @@ class OrderItems(db.Model, PersistentBase):
 
     @classmethod
     def find_by_order_id(cls, order_id: int):
+        """
+        Finds all items in an order by order id
+
+        Args:
+            order_id (int): the order id to search for
+
+        Returns:
+            list: a list of Item objects
+        """
         return cls.query.filter_by(order_id=order_id).all()

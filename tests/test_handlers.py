@@ -1,4 +1,7 @@
-# pylint: disable=duplicate-code
+"""
+Test cases for the Error Handlers
+"""
+
 import os
 import logging
 from unittest import TestCase
@@ -16,8 +19,8 @@ BASE_URL = "/orders"
 #  T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
-class TestYourResourceService(TestCase):
-    """REST API Server Tests"""
+class ErrorHandlerService(TestCase):
+    """Error Handlers Tests"""
 
     @classmethod
     def setUpClass(cls):
