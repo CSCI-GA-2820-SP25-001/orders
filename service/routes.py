@@ -172,13 +172,48 @@ def list_orders():
     app.logger.info("Request for order list")
 
     orders = []
+    valid_filters = ["customer", "status", "date"]
 
-    # Parse any arguments from the query string
+    # Check for invalid query parameters
+    for param in request.args:
+        if param not in valid_filters:
+            app.logger.error("Invalid filter parameter: %s", param)
+            return (
+                jsonify(
+                    status=status.HTTP_400_BAD_REQUEST,
+                    error="Bad Request",
+                    message=f"Invalid filter parameter: {param}. Valid filters are: {', '.join(valid_filters)}",
+                ),
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+    # Parse arguments from the query string
     customer_id = request.args.get("customer")
-
+    order_status = request.args.get("status")
+    order_date = request.args.get("date")
+    # Apply filters based on query parameters
     if customer_id:
         app.logger.info("Find by customer: %s", customer_id)
         orders = Order.find_by_customer(customer_id)
+    elif order_status:
+        app.logger.info("Find by status: %s", order_status)
+        orders = Order.find_by_status(order_status)
+    elif order_date:
+        app.logger.info("Find by date: %s", order_date)
+        try:
+            # Validate date format (YYYY-MM-DD)
+            datetime.datetime.strptime(order_date, "%Y-%m-%d")
+            orders = Order.find_by_date(order_date)
+        except ValueError:
+            app.logger.error("Invalid date format: %s", order_date)
+            return (
+                jsonify(
+                    status=status.HTTP_400_BAD_REQUEST,
+                    error="Bad Request",
+                    message="Invalid date format. Date must be in YYYY-MM-DD format.",
+                ),
+                status.HTTP_400_BAD_REQUEST,
+            )
     else:
         app.logger.info("Find all")
         orders = Order.all()
