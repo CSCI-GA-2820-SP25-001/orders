@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/CSCI-GA-2820-SP25-001/orders/graph/badge.svg?token=7L6U3T50NL)](https://codecov.io/gh/CSCI-GA-2820-SP25-001/orders)
+
 # NYU DevOps Project Template
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
