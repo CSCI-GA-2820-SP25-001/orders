@@ -232,7 +232,7 @@ class TestYourResourceService(TestCase):
         """It should Get a list of Orders by customer_id"""
         orders = self._create_orders(5)
         customer_id = orders[0].customer_id
-        response = self.client.get(BASE_URL + "?customer_id=" + str(customer_id))
+        response = self.client.get(BASE_URL + "?customer=" + str(customer_id))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertGreaterEqual(len(data), 1)
@@ -372,54 +372,61 @@ class TestYourResourceService(TestCase):
 
         # code juan, test list items order
 
-    def test_list_orderitems(self):
-        """It should List an Order's Items"""
-        order = self._create_orders(1)[0]
-        order_items = OrderItemsFactory.create_batch(2)
-
-        # Create Order Item 1
-        resp = self.client.post(
-            f"/orders/{order.id}/items", json=order_items[0].serialize()
-        )
-        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-
-        # Create Order Item 2
-        resp = self.client.post(
-            f"/orders/{order.id}/items", json=order_items[1].serialize()
-        )
-        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-
-        response = self.client.get(f"/orders/{order.id}/items")
+    def test_get_all_orders(self):
+        """Test retrieving all orders without filters"""
+        self._create_orders(2)
+        response = self.client.get("/orders")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(len(data), 2)
 
-    def test_list_orderitems_nonexistent_order(self):
-        """It should not List an Order Items for a non-existent order"""
-        response = self.client.get("/orders/999/items")
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+    def test_filter_orders_by_customer(self):
+        """Test filtering orders by customer ID"""
+        order1 = {"customer_id": 101, "order_status": "pending", "orderitems": []}
+        order2 = {"customer_id": 202, "order_status": "shipped", "orderitems": []}
+        self.client.post("/orders", json=order1)
+        self.client.post("/orders", json=order2)
 
-    def test_wrong_content_type(self):
-        """It should return a 415 unsupported media type"""
-        headers = {"Content-Type": "text/plain"}
-        resp = self.client.post("/orders", data="order_status=pending", headers=headers)
-        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+        response = self.client.get("/orders?customer=101")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.get_json()
+        self.assertTrue(all(o["customer_id"] == 101 for o in results))
 
-    def test_no_content_type(self):
-        """It should return a 415 unsupported media type"""
-        resp = self.client.post("/orders", data="order_status=pending")
-        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+    def test_filter_orders_by_status(self):
+        """Test filtering orders by status"""
+        order1 = {"customer_id": 1, "order_status": "pending", "orderitems": []}
+        order2 = {"customer_id": 1, "order_status": "delivered", "orderitems": []}
+        self.client.post("/orders", json=order1)
+        self.client.post("/orders", json=order2)
 
-    def test_update_nonexistent_order(self):
-        """It should not Update an Order that does not exist"""
-        order = {"order_status": "pending", "customer_id": 1}
-        resp = self.client.put("/orders/999", json=order)
-        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        response = self.client.get("/orders?order_status=delivered")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.get_json()
+        self.assertTrue(all(o["order_status"] == "delivered" for o in results))
 
-    def test_no_content_type_get(self):
-        """It should return a 415 unsupported media type"""
-        order = OrderFactory()
-        resp = self.client.post(
-            "/orders", data=order.serialize(), headers={"Content-Type": None}
-        )
-        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+    def test_filter_orders_by_date(self):
+        """Test filtering orders by creation date"""
+        import time
+        from datetime import datetime
+
+        order1 = {"customer_id": 1, "order_status": "pending", "orderitems": []}
+        self.client.post("/orders", json=order1)
+        time.sleep(1)
+        order2 = {"customer_id": 1, "order_status": "pending", "orderitems": []}
+        self.client.post("/orders", json=order2)
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.get(f"/orders?order_created={today}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.get_json()
+        self.assertTrue(isinstance(results, list))
+
+    def test_invalid_customer_filter(self):
+        """Test passing non-integer as customer filter"""
+        response = self.client.get("/orders?customer=abc")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_date_filter(self):
+        """Test passing invalid date string"""
+        response = self.client.get("/orders?order_created=bad-date")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

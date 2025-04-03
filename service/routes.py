@@ -165,23 +165,76 @@ def get_orders(order_id):
     return jsonify(order.serialize()), status.HTTP_200_OK
 
 
-# GET A LIST OF ORDERS
+# GET A LIST OF ORDERS Juan hide the code below
+# @app.route("/orders", methods=["GET"])
+# def list_orders():
+#   """Returns all of the Orders"""
+#   app.logger.info("Request for order list")
+
+# orders = []
+
+# Parse any arguments from the query string - Juan hide the code below
+# customer_id = request.args.get("customer")
+
+# if customer_id:
+#    app.logger.info("Find by customer: %s", customer_id)
+#    orders = Order.find_by_customer(customer_id)
+# else:
+#    app.logger.info("Find all")
+#    orders = Order.all()
+
+# results = [order.serialize() for order in orders]
+# app.logger.info("Returning %d orders", len(results))
+# return jsonify(results), status.HTTP_200_OK
+
+
+# code juan
+
+
 @app.route("/orders", methods=["GET"])
 def list_orders():
-    """Returns all of the Orders"""
+    """Returns a list of Orders, with optional filters"""
     app.logger.info("Request for order list")
 
-    orders = []
-
-    # Parse any arguments from the query string
     customer_id = request.args.get("customer")
+    order_status = request.args.get("order_status")
+    order_created = request.args.get("order_created")
 
-    if customer_id:
-        app.logger.info("Find by customer: %s", customer_id)
-        orders = Order.find_by_customer(customer_id)
-    else:
-        app.logger.info("Find all")
+    try:
         orders = Order.all()
+    except Exception as e:
+        app.logger.error("Error fetching orders: %s", e)
+        abort(status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # Filter by customer_id
+    if customer_id:
+        try:
+            customer_id = int(customer_id)
+            orders = [o for o in orders if o.customer_id == customer_id]
+        except ValueError:
+            abort(status.HTTP_400_BAD_REQUEST, description="Invalid customer ID format")
+
+    # Filter by order_status
+    if order_status:
+        orders = [o for o in orders if o.order_status.lower() == order_status.lower()]
+
+    # Filter by order_created
+    if order_created:
+        from datetime import datetime
+
+        try:
+            parsed_date = datetime.strptime(order_created, "%Y-%m-%d")
+            orders = [
+                o
+                for o in orders
+                if isinstance(o.order_created, datetime)
+                and o.order_created.date() >= parsed_date.date()
+            ]
+        except ValueError:
+            abort(
+                status.HTTP_400_BAD_REQUEST,
+                description="Invalid date format. Use YYYY-MM-DD",
+            )
 
     results = [order.serialize() for order in orders]
     app.logger.info("Returning %d orders", len(results))
