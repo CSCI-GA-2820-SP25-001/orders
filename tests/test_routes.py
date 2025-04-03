@@ -21,6 +21,7 @@ TestYourResourceModel API Service Test Suite
 # pylint: disable=duplicate-code
 import os
 import logging
+import datetime
 from unittest import TestCase
 from wsgi import app
 from service.common import status
@@ -232,10 +233,72 @@ class TestYourResourceService(TestCase):
         """It should Get a list of Orders by customer_id"""
         orders = self._create_orders(5)
         customer_id = orders[0].customer_id
-        response = self.client.get(BASE_URL + "?customer_id=" + str(customer_id))
+        response = self.client.get(BASE_URL + "?customer=" + str(customer_id))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertGreaterEqual(len(data), 1)
+
+    def test_get_order_list_by_status(self):
+        """It should Get a list of Orders by status"""
+        # Create orders with different statuses
+        order1 = OrderFactory(order_status="pending")
+        order1.create()
+        order2 = OrderFactory(order_status="shipped")
+        order2.create()
+        order3 = OrderFactory(order_status="delivered")
+        order3.create()
+        order4 = OrderFactory(order_status="pending")
+        order4.create()
+
+        # Test filtering by pending status
+        response = self.client.get(BASE_URL + "?status=pending")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 2)
+        for order in data:
+            self.assertEqual(order["order_status"], "pending")
+
+        # Test filtering by shipped status
+        response = self.client.get(BASE_URL + "?status=shipped")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["order_status"], "shipped")
+
+    def test_get_order_list_by_date(self):
+        """It should Get a list of Orders by date"""
+        # Create an order with a specific date
+        order = OrderFactory()
+        order.order_created = datetime.datetime.strptime(
+            "2023-01-01T10:00:00", "%Y-%m-%dT%H:%M:%S"
+        )
+        order.create()
+
+        # Test filtering by date
+        response = self.client.get(BASE_URL + "?date=2023-01-01")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 1)
+
+        # Test with a date that has no orders
+        response = self.client.get(BASE_URL + "?date=2022-01-01")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 0)
+
+    def test_get_order_list_with_invalid_filter(self):
+        """It should return 400 Bad Request for invalid filter parameters"""
+        response = self.client.get(BASE_URL + "?invalid_param=value")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data = response.get_json()
+        self.assertIn("Invalid filter parameter", data["message"])
+
+    def test_get_order_list_with_invalid_date_format(self):
+        """It should return 400 Bad Request for invalid date format"""
+        response = self.client.get(BASE_URL + "?date=01-01-2023")  # Wrong format
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data = response.get_json()
+        self.assertIn("Invalid date format", data["message"])
 
     # Test update an order
     def test_update_order(self):

@@ -105,4 +105,39 @@ class Order(db.Model, PersistentBase):
         Returns:
             a list of Order objects. Could be empty.
         """
-        return cls.query.filter(cls.customer_id == customer_id).all()
+        try:
+            # Convert string to int if it's a string
+            if isinstance(customer_id, str):
+                customer_id = int(customer_id)
+            return cls.query.filter(cls.customer_id == customer_id).all()
+        except (ValueError, TypeError):
+            # Return empty list if conversion fails
+            return []
+
+    @classmethod
+    def find_by_status(cls, status):
+        """Returns all orders from the database with the given status
+        Args:
+            status (string): the status of the orders to find
+        Returns:
+            a list of Order objects. Could be empty.
+        """
+        return cls.query.filter(cls.order_status == status).all()
+
+    @classmethod
+    def find_by_date(cls, date_str):
+        """Returns all orders from the database created on the given date
+        Args:
+            date_str (string): the date of the orders to find in format YYYY-MM-DD
+        Returns:
+            a list of Order objects. Could be empty.
+        """
+        try:
+            # Use SQLAlchemy's cast function to convert the date string to a date
+            # and compare with the date part of order_created
+            return cls.query.filter(
+                db.func.date(cls.order_created) == db.func.cast(date_str, db.Date)
+            ).all()
+        except Exception:
+            # Return empty list if there's any error
+            return []
