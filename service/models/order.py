@@ -21,6 +21,7 @@ Persistent Base class for database CRUD functions
 import logging
 
 # from datetime import date
+from sqlalchemy.exc import SQLAlchemyError
 from .persistent_base import db, PersistentBase, DataValidationError
 from .orderitems import OrderItems
 
@@ -138,6 +139,10 @@ class Order(db.Model, PersistentBase):
             return cls.query.filter(
                 db.func.date(cls.order_created) == db.func.cast(date_str, db.Date)
             ).all()
-        except Exception:
-            # Return empty list if there's any error
+        except (ValueError, TypeError):
+            # Return empty list if there's an error with the date format
+            return []
+        except SQLAlchemyError:
+            # Return empty list if there's a database error
+            logger.error("Database error occurred when finding orders by date")
             return []
