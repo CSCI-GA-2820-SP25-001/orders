@@ -379,3 +379,34 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
+
+
+######################################################################
+# CANCEL AN ORDER
+######################################################################
+
+
+@app.route("/orders/<int:order_id>/cancel", methods=["PUT"])
+def cancel_order(order_id):
+    """Cancelling a Order makes it unavailable"""
+    app.logger.info("Request to Cancel order with id: %d", order_id)
+
+    # Attempt to find the Order and abort if not found
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    # you can only cancel orders that are pending
+    if order.order_status.lower() != "pending":
+        abort(
+            status.HTTP_409_CONFLICT,
+            f"Order with id '{order_id}' cannot be canceled because it is in '{order.order_status}' status.",
+        )
+
+    # update status to canceled
+    order.order_status = "canceled"
+    order.order_updated = datetime.datetime.now()
+    order.update()
+
+    app.logger.info("Order with ID: %d has been canceled.", order_id)
+    return jsonify(order.serialize()), status.HTTP_200_OK
