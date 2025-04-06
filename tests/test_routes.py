@@ -486,3 +486,33 @@ class TestYourResourceService(TestCase):
             "/orders", data=order.serialize(), headers={"Content-Type": None}
         )
         self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    # ----------------------------------------------------------
+    # TEST ACTIONS
+    # ----------------------------------------------------------
+    def test_cancel_order(self):
+        """It should Cancel an Order with pending status"""
+        order = OrderFactory(order_status="pending")
+        response = self.client.post(BASE_URL, json=order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order_id = response.get_json()["id"]
+
+        response = self.client.put(f"{BASE_URL}/{order_id}/cancel")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["order_status"], "canceled")
+
+    def test_cancel_non_pending_order(self):
+        """It should not cancel orders that are not in 'pending' status"""
+        for non_pending_status in ["shipped", "delivered"]:
+            order = OrderFactory(order_status=non_pending_status)
+            response = self.client.post(BASE_URL, json=order.serialize())
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            order_id = response.get_json()["id"]
+
+            response = self.client.put(f"{BASE_URL}/{order_id}/cancel")
+            self.assertEqual(
+                response.status_code,
+                status.HTTP_409_CONFLICT,
+                msg=f"Expected 409 when canceling order with status '{non_pending_status}'",
+            )
