@@ -1,86 +1,93 @@
-[![codecov](https://codecov.io/gh/CSCI-GA-2820-SP25-001/orders/graph/badge.svg?token=7L6U3T50NL)](https://codecov.io/gh/CSCI-GA-2820-SP25-001/orders)
+# lab-github-actions
 
-# NYU DevOps Project Template
+[![Build Status](https://github.com/nyu-devops/lab-github-actions/actions/workflows/workflow.yml/badge.svg)](https://github.com/nyu-devops/lab-github-actions/actions)
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Python](https://img.shields.io/badge/Language-Python-blue.svg)](https://python.org/)
+This is for NYU DevOps lab on using GitHub Actions with Redis for Continuous Integration
 
+## Introduction
 
-## Overview
+This lab contains a `workflow.yml` file in the `.github/workflows/` folder that shows you how to run your tests and start a Redis service be attached while running them. It also uses Code Coverage to determine how complete your testing is.
 
-This repo contains code for the orders microservice. The `/service` folder contains `models.py` file for our model and a `routes.py` file for our service. The `/tests` folder has test cases for testing the model and the service separately.
+GitHub Actions can be used as an alternative to Travis CI to run tests on every Pull Request to facilitate implementing Continuous Integration for your development team. Every Pull Request is an opportunity for a code review and any Pull Request that lowers the test coverage should be rejected until more test cases are added to bring the coverage back up to the threshold set by the team. (usually 90% to 95%)
 
+## Setup
 
-## Contents
+To complete this lab you will need to Fork this repo because you need to make a change in order to trigger GitHub Actions. When making a Pull Request, you want to make sure that your request is merging with your Fork because the Pull Request of a Fork will default to come back to this repo and not your Fork.
 
-The project contains the following:
+You can read about why in my article [Creating Reproducible Development Environments](https://medium.com/nerd-for-tech/creating-reproducible-development-environments-fac8d6471f35).
+
+### Prerequisite Installation
+
+All of our development is done in Docker containers using **Visual Studio Code**. This project contains a `.devcontainer` folder that will set up a Docker environment in VSCode for you. You will need the following:
+
+- Docker Desktop for [Mac](https://docs.docker.com/docker-for-mac/install/) or [Windows](https://docs.docker.com/docker-for-windows/install/)
+- Microsoft Visual Studio Code ([VSCode](https://code.visualstudio.com/download))
+- [Remote Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) VSCode Extension
+
+It is a good idea to add VSCode to your path so that you can invoke it from the command line. To do this, open VSCode and type `Shift+Command+P` on Mac or `Shift+Ctrl+P` on Windows to open the command palete and then search for "shell" and select the option **Shell Command: Install 'code' command in Path**. This will install VSCode in your path.
+
+Then you can start your development environment up with:
+
+```bash
+    git clone https://github.com/nyu-devops/lab-github-actions.git
+    cd lab-github-actions
+    code .
+```
+
+The first time it will build the Docker image but after that it will just create a container and place you inside of it in your `/app` folder which actually contains the repo shared from your computer. It will also install all of the VSCode extensions needed for Python development.
+
+If it does not automatically prompt you to open the project in a container, you can select the green icon at the bottom left of your VSCode UI and select: **Remote Containers: Reopen in Container**.
+
+### Alternate manual install using local Python
+
+This option is not recommended because developing natively on your local computer does ensure that the code will work on anyone elses computer or in production.  I strongly recommend that you Docker with Visual Studio Code to create a reproducible development environment, but if you cannot for some reason, and have Python 3 installed on your computer, you can make a Python virtual environment and run the code locally with:
+
+```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+```
+
+You will also need Docker on your computer to run a container for the database.
+
+```bash
+docker run -d --name redis -p 6379:6379 -v redis:/data redis:alpine
+```
+
+This will run Redis on Alpine and have it forward port `6379` so that your application and communicate with it.
+
+You can now run `make test` to run the TDD tests locally.
+
+You can also test the application manually by running it with:
+
+```bash
+honcho start
+```
+
+## Manually running the Tests
+
+Run the tests using `green` and `coverage`
+
+```bash
+make test
+```
+
+Green is configured to automatically include the flags so that red-green-refactor is meaningful. If you are in a command shell that supports colors, passing tests will be green while failing tests will be red.
+
+## What's featured in the project?
 
 ```text
-.gitignore          - this will ignore vagrant and other metadata files
-.flaskenv           - Environment variables to configure Flask
-.gitattributes      - File to gix Windows CRLF issues
-.devcontainers/     - Folder with support for VSCode Remote Containers
-dot-env-example     - copy to .env to use environment variables
-pyproject.toml      - Poetry list of Python libraries required by your code
-
-service/                   - service python package
-├── __init__.py            - package initializer
-├── config.py              - configuration parameters
-├── models.py              - module with business models
-├── routes.py              - module with service routes
-└── common                 - common code package
-    ├── cli_commands.py    - Flask command to recreate all tables
-    ├── error_handlers.py  - HTTP error handling code
-    ├── log_handlers.py    - logging setup code
-    └── status.py          - HTTP status constants
-
-tests/                     - test cases package
-├── __init__.py            - package initializer
-├── factories.py           - Factory for testing with fake objects
-├── test_cli_commands.py   - test suite for the CLI
-├── test_models.py         - test suite for business models
-└── test_routes.py         - test suite for service routes
-
-## Database
-
-Data for our orders will be compiled in a PostgreSQL database, under the table name "order" located in models/models.py. Features and accepted entries are as follows:
-
-id (Integer)
-customer_id (Integer)
-order_status (String)
-order_created (Datetime)
-order_updated (Datetime)
-orderitems (Unbounded)
-
-
-## Functionalities
-
-The following functionalities detail actions users can take when interacting with the orders microservice portion of the website. Functionalities can be found under models/routes.py, and corresponding tests can be found under tests/test_routes.py.
-
-REST API Endpoints:
-
-get_orderitem (Return an Order Item based on its id)
-create_order (Create an order)
-create_orderitem (Create an item within an order)
-get_orders (Return an order based on its id)
-list_orders (Return a list of all orders)
-delete_orderitem (Delete an item from an order)
-delete_order (Delete an order)
-update_orders (Update an order)
-update_items (Update an item in an order)
-list_orderitems (Return a list of all items in a given order)
-
-Utility Functions:
-
-check_content_type (Checks that the media type is correct)
-
-
-```
+    * models.py -- the database model that uses Redis
+    * routes.py -- the main Service using Python Flask and Redis
+    * test_models.py -- test cases for the model using PyUnit (unittest)
+    * test_service.py -- test cases for the service using PyUnit (unittest)
+    * .github/workflows/workflow.yml -- the GitHub Actions file that automates testing
+````
 
 ## License
 
-Copyright (c) 2016, 2025 [John Rofrano](https://www.linkedin.com/in/JohnRofrano/). All rights reserved.
+Copyright (c) 2021, 2023 John Rofrano. All rights reserved.
 
 Licensed under the Apache License. See [LICENSE](LICENSE)
 
-This repository is part of the New York University (NYU) masters class: **CSCI-GA.2820-001 DevOps and Agile Methodologies** created and taught by [John Rofrano](https://cs.nyu.edu/~rofrano/), Adjunct Instructor, NYU Courant Institute, Graduate Division, Computer Science, and NYU Stern School of Business.
+This repository is part of the NYU masters class: **CSCI-GA.2820-001 DevOps and Agile Methodologies** conceived, created, and taught by [John Rofrano Adjunct Instructor](https://cs.nyu.edu/~rofrano/), NYU Courant Institute of Mathematical Sciences, Graduate Division, Computer Science, and NYU Stern School of Business.
