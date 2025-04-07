@@ -44,7 +44,7 @@ jobs:
 
       - name: Install system dependencies (git)
         run: |
-          apt-get update && apt-get install -y git
+          apt-get update && apt-get install -y git curl gpg
               
       - name: Install Python package dependencies
         run: |
@@ -71,3 +71,4 @@ jobs:
         uses: codecov/codecov-action@v5.4.0
         with:
             token: ${{ secrets.CODECOV_TOKEN }}
+            fail_ci_if_error: true
