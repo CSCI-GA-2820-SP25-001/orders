@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/CSCI-GA-2820-SP25-001/orders/actions/workflows/workflow.yml/badge.svg)](https://github.com/CSCI-GA-2820-SP25-001/orders/actions)
+[![Build Status](https://github.com/CSCI-GA-2820-SP25-001/orders/actions/workflows/ci.yml/badge.svg)](https://github.com/CSCI-GA-2820-SP25-001/orders/actions)
 
 [![codecov](https://codecov.io/gh/CSCI-GA-2820-SP25-001/orders/graph/badge.svg?token=7L6U3T50NL)](https://codecov.io/gh/CSCI-GA-2820-SP25-001/orders)
 
