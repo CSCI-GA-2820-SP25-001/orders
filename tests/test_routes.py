@@ -128,8 +128,11 @@ class TestYourResourceService(TestCase):
         """It should call the Home Page"""
         response = self.client.get("/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.get_json()
-        self.assertEqual(data["name"], "Orders and Order Items REST API Service")
+        # Check that the content type is HTML
+        self.assertIn("text/html", response.content_type)
+        # Check that the response contains HTML content
+        self.assertIn(b"<!DOCTYPE html>", response.data)
+        self.assertIn(b"<html>", response.data)
 
     # Test create an order
     def test_create_an_order(self):
