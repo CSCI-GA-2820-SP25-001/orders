@@ -30,7 +30,7 @@ from service.common import log_handlers
 def create_app():
     """Initialize the core application."""
     # Create Flask application
-    app = Flask(__name__, static_folder="/app/service/static")
+    app = Flask(__name__)
     app.config.from_object(config)
 
     # Initialize Plugins
