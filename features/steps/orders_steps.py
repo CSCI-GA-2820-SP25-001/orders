@@ -15,9 +15,9 @@
 ######################################################################
 
 """
-Pet Steps
+Order Steps
 
-Steps file for Pet.feature
+Steps file for Order.feature
 
 For information on Waiting until elements are present in the HTML see:
     https://selenium-python.readthedocs.io/waits.html
@@ -34,27 +34,28 @@ HTTP_204_NO_CONTENT = 204
 WAIT_TIMEOUT = 60
 
 
-@given('the following pets')
+@given("the following orders")
 def step_impl(context):
-    """ Delete all Pets and load new ones """
+    """Delete all Orders and load new ones"""
 
-    # Get a list all of the pets
-    rest_endpoint = f"{context.base_url}/pets"
+    # Get a list all of the orders
+    rest_endpoint = f"{context.base_url}/orders"
     context.resp = requests.get(rest_endpoint, timeout=WAIT_TIMEOUT)
     expect(context.resp.status_code).equal_to(HTTP_200_OK)
     # and delete them one by one
-    for pet in context.resp.json():
-        context.resp = requests.delete(f"{rest_endpoint}/{pet['id']}", timeout=WAIT_TIMEOUT)
+    for order in context.resp.json():
+        context.resp = requests.delete(
+            f"{rest_endpoint}/{order['id']}", timeout=WAIT_TIMEOUT
+        )
         expect(context.resp.status_code).equal_to(HTTP_204_NO_CONTENT)
 
-    # load the database with new pets
+    # load the database with new orders
     for row in context.table:
         payload = {
-            "name": row['name'],
-            "category": row['category'],
-            "available": row['available'] in ['True', 'true', '1'],
-            "gender": row['gender'],
-            "birthday": row['birthday']
+            "customer_id": row["customer_id"],
+            "order_status": row["order_status"],
+            "order_created": row["order_created"],
+            "order_updated": row["order_updated"],
         }
         context.resp = requests.post(rest_endpoint, json=payload, timeout=WAIT_TIMEOUT)
         expect(context.resp.status_code).equal_to(HTTP_201_CREATED)
