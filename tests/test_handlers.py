@@ -8,6 +8,7 @@ from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.models import db, Order, OrderItems
+from service.common.error_handlers import internal_server_error
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -57,3 +58,18 @@ class ErrorHandlerService(TestCase):
         """Test 400 error"""
         response = self.client.post(BASE_URL, json={})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_internal_server_error(self):
+        """It should return 500 internal server error"""
+        # Create a mock Flask response
+        mock_error = Exception("Test internal server error")
+
+        # Call the error handler directly
+        response, status_code = internal_server_error(mock_error)
+
+        # Check the response
+        self.assertEqual(status_code, 500)
+        data = response.get_json()
+        self.assertEqual(data["status"], 500)
+        self.assertEqual(data["error"], "Internal Server Error")
+        self.assertIn("Test internal server error", data["message"])
