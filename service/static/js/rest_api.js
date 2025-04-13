@@ -6,25 +6,15 @@ $(function () {
 
     // Updates the form with data from the response
     function update_form_data(res) {
-        $("#pet_id").val(res.id);
-        $("#pet_name").val(res.name);
-        $("#pet_category").val(res.category);
-        if (res.available == true) {
-            $("#pet_available").val("true");
-        } else {
-            $("#pet_available").val("false");
-        }
-        $("#pet_gender").val(res.gender);
-        $("#pet_birthday").val(res.birthday);
+        $("#order_id").val(res.id);
+        $("#order_customer_id").val(res.customer_id);
+        $("#order_status").val(res.order_status);
     }
 
     /// Clears all form fields
     function clear_form_data() {
-        $("#pet_name").val("");
-        $("#pet_category").val("");
-        $("#pet_available").val("");
-        $("#pet_gender").val("");
-        $("#pet_birthday").val("");
+        $("#order_customer_id").val("");
+        $("#order_status").val("");
     }
 
     // Updates the flash message area
@@ -34,7 +24,7 @@ $(function () {
     }
 
     // ****************************************
-    // Create a Pet
+    // Create an Order
     // ****************************************
 
     $("#create-btn").click(function () {
@@ -44,7 +34,7 @@ $(function () {
 
         let data = {
             "customer_id": customer_id,
-            "order_status": order_status,
+            "order_status": order_status
         };
 
         $("#flash_message").empty();
@@ -68,31 +58,25 @@ $(function () {
 
 
     // ****************************************
-    // Update a Pet
+    // Update an Order
     // ****************************************
 
     $("#update-btn").click(function () {
 
-        let pet_id = $("#pet_id").val();
-        let name = $("#pet_name").val();
-        let category = $("#pet_category").val();
-        let available = $("#pet_available").val() == "true";
-        let gender = $("#pet_gender").val();
-        let birthday = $("#pet_birthday").val();
+        let order_id = $("#order_id").val();
+        let customer_id = $("#order_customer_id").val();
+        let order_status = $("#order_status").val();
 
         let data = {
-            "name": name,
-            "category": category,
-            "available": available,
-            "gender": gender,
-            "birthday": birthday
+            "customer_id": customer_id,
+            "order_status": order_status
         };
 
         $("#flash_message").empty();
 
         let ajax = $.ajax({
                 type: "PUT",
-                url: `/pets/${pet_id}`,
+                url: `/orders/${order_id}`,
                 contentType: "application/json",
                 data: JSON.stringify(data)
             })
@@ -109,24 +93,23 @@ $(function () {
     });
 
     // ****************************************
-    // Retrieve a Pet
+    // Retrieve an Order
     // ****************************************
 
     $("#retrieve-btn").click(function () {
 
-        let pet_id = $("#pet_id").val();
+        let order_id = $("#order_id").val();
 
         $("#flash_message").empty();
 
         let ajax = $.ajax({
             type: "GET",
-            url: `/pets/${pet_id}`,
+            url: `/orders/${order_id}`,
             contentType: "application/json",
             data: ''
         })
 
         ajax.done(function(res){
-            //alert(res.toSource())
             update_form_data(res)
             flash_message("Success")
         });
@@ -139,25 +122,76 @@ $(function () {
     });
 
     // ****************************************
-    // Delete a Pet
+    // Search for an Order by ID
+    // ****************************************
+
+    $("#search-by-id-btn").click(function () {
+
+        let order_id = $("#search_order_id").val();
+
+        $("#flash_message").empty();
+
+        let ajax = $.ajax({
+            type: "GET",
+            url: `/orders/${order_id}`,
+            contentType: "application/json",
+            data: ''
+        })
+
+        ajax.done(function(res){
+            // Display the order in the search results
+            $("#search_results").empty();
+            let table = '<table class="table table-striped" cellpadding="10">'
+            table += '<thead><tr>'
+            table += '<th class="col-md-1">ID</th>'
+            table += '<th class="col-md-3">Customer ID</th>'
+            table += '<th class="col-md-3">Status</th>'
+            table += '<th class="col-md-3">Created</th>'
+            table += '<th class="col-md-3">Updated</th>'
+            table += '</tr></thead><tbody>'
+            
+            // Format the dates for display
+            let created = new Date(res.order_created).toLocaleString();
+            let updated = new Date(res.order_updated).toLocaleString();
+            
+            table += `<tr><td>${res.id}</td><td>${res.customer_id}</td><td>${res.order_status}</td><td>${created}</td><td>${updated}</td></tr>`;
+            table += '</tbody></table>';
+            $("#search_results").append(table);
+            
+            // Also update the form with the order data
+            update_form_data(res);
+            
+            flash_message("Order found successfully")
+        });
+
+        ajax.fail(function(res){
+            clear_form_data();
+            $("#search_results").empty();
+            flash_message("Order not found with the given ID")
+        });
+
+    });
+
+    // ****************************************
+    // Delete an Order
     // ****************************************
 
     $("#delete-btn").click(function () {
 
-        let pet_id = $("#pet_id").val();
+        let order_id = $("#order_id").val();
 
         $("#flash_message").empty();
 
         let ajax = $.ajax({
             type: "DELETE",
-            url: `/pets/${pet_id}`,
+            url: `/orders/${order_id}`,
             contentType: "application/json",
             data: '',
         })
 
         ajax.done(function(res){
             clear_form_data()
-            flash_message("Pet has been Deleted!")
+            flash_message("Order has been Deleted!")
         });
 
         ajax.fail(function(res){
@@ -170,38 +204,32 @@ $(function () {
     // ****************************************
 
     $("#clear-btn").click(function () {
-        $("#pet_id").val("");
+        $("#order_id").val("");
+        $("#search_order_id").val("");
         $("#flash_message").empty();
+        $("#search_results").empty();
         clear_form_data()
     });
 
     // ****************************************
-    // Search for a Pet
+    // Search for Orders
     // ****************************************
 
     $("#search-btn").click(function () {
 
-        let name = $("#pet_name").val();
-        let category = $("#pet_category").val();
-        let available = $("#pet_available").val() == "true";
+        let customer_id = $("#order_customer_id").val();
+        let order_status = $("#order_status").val();
 
         let queryString = ""
 
-        if (name) {
-            queryString += 'name=' + name
+        if (customer_id) {
+            queryString += 'customer=' + customer_id
         }
-        if (category) {
+        if (order_status) {
             if (queryString.length > 0) {
-                queryString += '&category=' + category
+                queryString += '&status=' + order_status
             } else {
-                queryString += 'category=' + category
-            }
-        }
-        if (available) {
-            if (queryString.length > 0) {
-                queryString += '&available=' + available
-            } else {
-                queryString += 'available=' + available
+                queryString += 'status=' + order_status
             }
         }
 
@@ -209,37 +237,37 @@ $(function () {
 
         let ajax = $.ajax({
             type: "GET",
-            url: `/pets?${queryString}`,
+            url: `/orders?${queryString}`,
             contentType: "application/json",
             data: ''
         })
 
         ajax.done(function(res){
-            //alert(res.toSource())
             $("#search_results").empty();
             let table = '<table class="table table-striped" cellpadding="10">'
             table += '<thead><tr>'
-            table += '<th class="col-md-2">ID</th>'
-            table += '<th class="col-md-2">Name</th>'
-            table += '<th class="col-md-2">Category</th>'
-            table += '<th class="col-md-2">Available</th>'
-            table += '<th class="col-md-2">Gender</th>'
-            table += '<th class="col-md-2">Birthday</th>'
+            table += '<th class="col-md-1">ID</th>'
+            table += '<th class="col-md-3">Customer ID</th>'
+            table += '<th class="col-md-3">Status</th>'
+            table += '<th class="col-md-3">Created</th>'
+            table += '<th class="col-md-3">Updated</th>'
             table += '</tr></thead><tbody>'
-            let firstPet = "";
+            let firstOrder = "";
             for(let i = 0; i < res.length; i++) {
-                let pet = res[i];
-                table +=  `<tr id="row_${i}"><td>${pet.id}</td><td>${pet.name}</td><td>${pet.category}</td><td>${pet.available}</td><td>${pet.gender}</td><td>${pet.birthday}</td></tr>`;
+                let order = res[i];
+                let created = new Date(order.order_created).toLocaleString();
+                let updated = new Date(order.order_updated).toLocaleString();
+                table += `<tr id="row_${i}"><td>${order.id}</td><td>${order.customer_id}</td><td>${order.order_status}</td><td>${created}</td><td>${updated}</td></tr>`;
                 if (i == 0) {
-                    firstPet = pet;
+                    firstOrder = order;
                 }
             }
             table += '</tbody></table>';
             $("#search_results").append(table);
 
             // copy the first result to the form
-            if (firstPet != "") {
-                update_form_data(firstPet)
+            if (firstOrder != "") {
+                update_form_data(firstOrder)
             }
 
             flash_message("Success")

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>order Demo RESTful Service</title>
+    <title>Order Demo RESTful Service</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +11,22 @@
   <body>
     <div class="container">
       <div class="page-header">
-          <h1>order Demo REST API Service</h1>
+          <h1>Order Demo REST API Service</h1>
+      </div>
+
+      <!-- Search by Order ID -->
+      <div class="well">
+        <div class="form-horizontal">
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="search_order_id">Search Order by ID:</label>
+            <div class="col-sm-6">
+              <input type="text" class="form-control" id="search_order_id" placeholder="Enter Order ID to search">
+            </div>
+            <div class="col-sm-4">
+              <button type="submit" class="btn btn-primary" id="search-by-id-btn">Search</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Flash Message -->
@@ -23,7 +38,7 @@
 
       <!-- FORM -->
       <div class="col-md-12" id="form_data">
-        <h3>Create, Retrieve, Update, and Delete a order:</h3>
+        <h3>Create, Retrieve, Update, and Delete an Order:</h3>
         <div class="well">
           <div class="form-horizontal">
             <div class="form-group">
@@ -86,11 +101,10 @@
           <thead>
           <tr>
             <th class="col-md-1">ID</th>
-            <th class="col-md-4">Name</th>
-            <th class="col-md-4">Category</th>
-            <th class="col-md-3">Available</th>
-            <th class="col-md-3">Gender</th>
-            <th class="col-md-3">Birthday</th>
+            <th class="col-md-3">Customer ID</th>
+            <th class="col-md-3">Status</th>
+            <th class="col-md-3">Created</th>
+            <th class="col-md-3">Updated</th>
           </tr>
           </thead>
         </table>
