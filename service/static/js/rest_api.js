@@ -69,7 +69,9 @@ $(function () {
 
         let data = {
             "customer_id": customer_id,
-            "order_status": order_status
+            "order_status": order_status,
+            "order_created": order_created,
+            "order_updated": order_updated
         };
 
         $("#flash_message").empty();
@@ -151,8 +153,8 @@ $(function () {
             table += '</tr></thead><tbody>'
             
             // Format the dates for display
-            let created = new Date(res.order_created).toLocaleString();
-            let updated = new Date(res.order_updated).toLocaleString();
+            let created = $("#order_created").val();
+            let updated = $("#order_updated").val();
             
             table += `<tr><td>${res.id}</td><td>${res.customer_id}</td><td>${res.order_status}</td><td>${created}</td><td>${updated}</td></tr>`;
             table += '</tbody></table>';
@@ -255,8 +257,8 @@ $(function () {
             let firstOrder = "";
             for(let i = 0; i < res.length; i++) {
                 let order = res[i];
-                let created = new Date(order.order_created).toLocaleString();
-                let updated = new Date(order.order_updated).toLocaleString();
+                let created = $("#order_created").val();
+                let updated = $("#order_updated").val();
                 table += `<tr id="row_${i}"><td>${order.id}</td><td>${order.customer_id}</td><td>${order.order_status}</td><td>${created}</td><td>${updated}</td></tr>`;
                 if (i == 0) {
                     firstOrder = order;
