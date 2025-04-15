@@ -22,8 +22,10 @@ Test cases for Order Model
 
 import logging
 import os
+import datetime
 from unittest import TestCase
 from unittest.mock import patch
+from sqlalchemy.exc import SQLAlchemyError
 from wsgi import app
 from service.models import Order, OrderItems, DataValidationError, db
 from tests.factories import OrderFactory, OrderItemsFactory
@@ -222,3 +224,92 @@ class TestOrder(TestCase):
         """It should not Deserialize an order item with a TypeError"""
         orderitem = OrderItems()
         self.assertRaises(DataValidationError, orderitem.deserialize, [])
+
+    def test_find_by_customer(self):
+        """It should Find Orders by Customer ID"""
+        # Create 5 orders with different customer IDs
+        orders = []
+        for i in range(5):
+            customer_id = i + 100
+            orders.append(OrderFactory(customer_id=customer_id))
+            orders[i].create()
+
+        # Create 2 more orders with the same customer ID
+        same_customer_id = 999
+        for _ in range(2):
+            order = OrderFactory(customer_id=same_customer_id)
+            order.create()
+            orders.append(order)
+
+        # Test finding orders by customer ID
+        found_orders = Order.find_by_customer(same_customer_id)
+        self.assertEqual(len(found_orders), 2)
+        for order in found_orders:
+            self.assertEqual(order.customer_id, same_customer_id)
+
+        # Test finding orders by customer ID as string
+        found_orders = Order.find_by_customer(str(same_customer_id))
+        self.assertEqual(len(found_orders), 2)
+        for order in found_orders:
+            self.assertEqual(order.customer_id, same_customer_id)
+
+        # Test with invalid customer ID
+        found_orders = Order.find_by_customer("invalid")
+        self.assertEqual(len(found_orders), 0)
+
+    def test_find_by_status(self):
+        """It should Find Orders by Status"""
+        # Create 5 orders with different statuses
+        orders = []
+        for i, status in enumerate(
+            ["PLACED", "SHIPPED", "DELIVERED", "CANCELLED", "RETURNED"]
+        ):
+            orders.append(OrderFactory(order_status=status))
+            orders[i].create()
+
+        # Create 2 more orders with the same status
+        same_status = "PROCESSING"
+        for _ in range(2):
+            order = OrderFactory(order_status=same_status)
+            order.create()
+            orders.append(order)
+
+        # Test finding orders by status
+        found_orders = Order.find_by_status(same_status)
+        self.assertEqual(len(found_orders), 2)
+        for order in found_orders:
+            self.assertEqual(order.order_status, same_status)
+
+    def test_find_by_date(self):
+        """It should Find Orders by Date"""
+        # Create orders with specific dates
+        date1 = datetime.datetime(2023, 1, 15)
+        date2 = datetime.datetime(2023, 2, 20)
+
+        # Create 2 orders with the first date
+        for _ in range(2):
+            order = OrderFactory(order_created=date1)
+            order.create()
+
+        # Create 3 orders with the second date
+        for _ in range(3):
+            order = OrderFactory(order_created=date2)
+            order.create()
+
+        # Test finding orders by the first date
+        found_orders = Order.find_by_date("2023-01-15")
+        self.assertEqual(len(found_orders), 2)
+
+        # Test finding orders by the second date
+        found_orders = Order.find_by_date("2023-02-20")
+        self.assertEqual(len(found_orders), 3)
+
+        # Test with invalid date format
+        found_orders = Order.find_by_date("invalid-date")
+        self.assertEqual(len(found_orders), 0)
+
+        # Test with database error
+        with patch("service.models.order.db.func.date") as mock_date:
+            mock_date.side_effect = SQLAlchemyError("Database error")
+            found_orders = Order.find_by_date("2023-01-15")
+            self.assertEqual(len(found_orders), 0)
