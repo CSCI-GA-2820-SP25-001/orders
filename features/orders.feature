@@ -47,3 +47,22 @@ Scenario: List Order Items for an order with no items
     When I visit the "Home Page"
     # Skip this test for now as the web UI doesn't support listing order items yet
     # This scenario will be implemented when the web UI is updated
+
+# Order History API Tests
+Scenario: List orders for a specific customer
+    When I request orders for customer with id "1"
+    Then I should receive a list of 1 order
+    And the response status code should be "200"
+    And the orders should have the following statuses
+        | order_status |
+        | PENDING      |
+
+Scenario: List orders for a customer that doesn't exist
+    When I request orders for customer with id "999"
+    Then I should receive a list of 0 orders
+    And the response status code should be "200"
+
+Scenario: List orders with an invalid filter parameter
+    When I request orders with an invalid filter parameter
+    Then the response status code should be "400"
+    And the response should contain an error message about invalid filter
