@@ -290,7 +290,7 @@ def update_orders(order_id):
     # Update the Order with the new data
     data = request.get_json()
     app.logger.info("Processing: %s", data)
-    
+
     # Ensure all required fields are present
     # If order_created is not in the request data, use the existing value or set a default
     if "order_created" not in data:
@@ -299,18 +299,18 @@ def update_orders(order_id):
         else:
             # If order_created is None, set it to the current time
             data["order_created"] = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-    
+
     # If order_updated is not in the request data, set it to the current time
     if "order_updated" not in data:
         data["order_updated"] = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-    
+
     # If orderitems is not in the request data, use the existing items
     if "orderitems" not in data:
         data["orderitems"] = [item.serialize() for item in order.orderitems]
-    
+
     # Log the complete data being processed
     app.logger.info("Complete data for deserialize: %s", data)
-    
+
     order.deserialize(data)
 
     # Save the updates to the database
