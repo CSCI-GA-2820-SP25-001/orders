@@ -9,12 +9,16 @@ $(function () {
         $("#order_id").val(res.id);
         $("#order_customer_id").val(res.customer_id);
         $("#order_status").val(res.order_status);
+        if (res.order_created) {
+            $("#order_created").val(res.order_created.split('T')[0]);
+        }
     }
 
     /// Clears all form fields
     function clear_form_data() {
         $("#order_customer_id").val("");
         $("#order_status").val("");
+        $("#order_created").val("");
     }
 
     // Updates the flash message area
@@ -31,10 +35,12 @@ $(function () {
 
         let customer_id = $("#order_customer_id").val();
         let order_status = $("#order_status").val();
+        let order_created = $("#order_created").val();
 
         let data = {
             "customer_id": customer_id,
-            "order_status": order_status
+            "order_status": order_status,
+            "order_created": order_created
         };
 
         $("#flash_message").empty();
@@ -66,10 +72,15 @@ $(function () {
         let order_id = $("#order_id").val();
         let customer_id = $("#order_customer_id").val();
         let order_status = $("#order_status").val();
+        
+        // Get current timestamp for order_updated
+        let current_date = new Date();
+        let order_updated = current_date.toISOString();
 
         let data = {
             "customer_id": customer_id,
-            "order_status": order_status
+            "order_status": order_status,
+            "order_updated": order_updated
         };
 
         $("#flash_message").empty();
@@ -150,9 +161,9 @@ $(function () {
             table += '<th class="col-md-3">Updated</th>'
             table += '</tr></thead><tbody>'
             
-            // Format the dates for display
-            let created = new Date(res.order_created).toLocaleString();
-            let updated = new Date(res.order_updated).toLocaleString();
+            // Get the date value
+            let created = res.order_created ? res.order_created.split('T')[0] : "";
+            let updated = res.order_updated ? res.order_updated.split('T')[0] : "";
             
             table += `<tr><td>${res.id}</td><td>${res.customer_id}</td><td>${res.order_status}</td><td>${created}</td><td>${updated}</td></tr>`;
             table += '</tbody></table>';
@@ -219,6 +230,7 @@ $(function () {
 
         let customer_id = $("#order_customer_id").val();
         let order_status = $("#order_status").val();
+        let order_created = $("#order_created").val();
 
         let queryString = ""
 
@@ -230,6 +242,13 @@ $(function () {
                 queryString += '&status=' + order_status
             } else {
                 queryString += 'status=' + order_status
+            }
+        }
+        if (order_created) {
+            if (queryString.length > 0) {
+                queryString += '&created=' + order_created
+            } else {
+                queryString += 'created=' + order_created
             }
         }
 
@@ -255,8 +274,8 @@ $(function () {
             let firstOrder = "";
             for(let i = 0; i < res.length; i++) {
                 let order = res[i];
-                let created = new Date(order.order_created).toLocaleString();
-                let updated = new Date(order.order_updated).toLocaleString();
+                let created = order.order_created ? order.order_created.split('T')[0] : "";
+                let updated = order.order_updated ? order.order_updated.split('T')[0] : "";
                 table += `<tr id="row_${i}"><td>${order.id}</td><td>${order.customer_id}</td><td>${order.order_status}</td><td>${created}</td><td>${updated}</td></tr>`;
                 if (i == 0) {
                     firstOrder = order;
