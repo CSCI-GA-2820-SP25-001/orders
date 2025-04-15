@@ -217,9 +217,98 @@ $(function () {
     $("#clear-btn").click(function () {
         $("#order_id").val("");
         $("#search_order_id").val("");
+        $("#history_customer_id").val("");
         $("#flash_message").empty();
         $("#search_results").empty();
         clear_form_data()
+    });
+
+    // ****************************************
+    // View Order History by Customer ID
+    // ****************************************
+
+    $("#view-history-btn").click(function () {
+        let customer_id = $("#history_customer_id").val();
+        
+        if (!customer_id) {
+            flash_message("Please enter a Customer ID to view order history");
+            return;
+        }
+
+        $("#flash_message").empty();
+        
+        let ajax = $.ajax({
+            type: "GET",
+            url: `/orders?customer=${customer_id}`,
+            contentType: "application/json",
+            data: ''
+        });
+
+        ajax.done(function(res){
+            $("#search_results").empty();
+            
+            if (res.length === 0) {
+                flash_message(`No orders found for Customer ID: ${customer_id}`);
+                return;
+            }
+            
+            let table = '<table class="table table-striped" cellpadding="10">'
+            table += '<thead><tr>'
+            table += '<th class="col-md-1">ID</th>'
+            table += '<th class="col-md-2">Customer ID</th>'
+            table += '<th class="col-md-2">Status</th>'
+            table += '<th class="col-md-2">Created</th>'
+            table += '<th class="col-md-2">Updated</th>'
+            table += '<th class="col-md-3">Order Items</th>'
+            table += '</tr></thead><tbody>'
+            
+            for(let i = 0; i < res.length; i++) {
+                let order = res[i];
+                let created = order.order_created ? order.order_created.split('T')[0] : "";
+                let updated = order.order_updated ? order.order_updated.split('T')[0] : "";
+                
+                // Create a row for the order
+                let row = `<tr id="row_${i}">
+                    <td>${order.id}</td>
+                    <td>${order.customer_id}</td>
+                    <td>${order.order_status}</td>
+                    <td>${created}</td>
+                    <td>${updated}</td>
+                    <td>`;
+                
+                // Add order items details
+                if (order.orderitems && order.orderitems.length > 0) {
+                    row += '<table class="table table-bordered table-sm">';
+                    row += '<thead><tr><th>Product ID</th><th>Quantity</th><th>Price</th></tr></thead>';
+                    row += '<tbody>';
+                    
+                    for (let j = 0; j < order.orderitems.length; j++) {
+                        let item = order.orderitems[j];
+                        row += `<tr>
+                            <td>${item.product_id}</td>
+                            <td>${item.quantity}</td>
+                            <td>$${item.price.toFixed(2)}</td>
+                        </tr>`;
+                    }
+                    
+                    row += '</tbody></table>';
+                } else {
+                    row += '<em>No items in this order</em>';
+                }
+                
+                row += '</td></tr>';
+                table += row;
+            }
+            
+            table += '</tbody></table>';
+            $("#search_results").append(table);
+            
+            flash_message(`Found ${res.length} order(s) for Customer ID: ${customer_id}`);
+        });
+
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message);
+        });
     });
 
     // ****************************************
@@ -266,17 +355,50 @@ $(function () {
             let table = '<table class="table table-striped" cellpadding="10">'
             table += '<thead><tr>'
             table += '<th class="col-md-1">ID</th>'
-            table += '<th class="col-md-3">Customer ID</th>'
-            table += '<th class="col-md-3">Status</th>'
-            table += '<th class="col-md-3">Created</th>'
-            table += '<th class="col-md-3">Updated</th>'
+            table += '<th class="col-md-2">Customer ID</th>'
+            table += '<th class="col-md-2">Status</th>'
+            table += '<th class="col-md-2">Created</th>'
+            table += '<th class="col-md-2">Updated</th>'
+            table += '<th class="col-md-3">Order Items</th>'
             table += '</tr></thead><tbody>'
             let firstOrder = "";
             for(let i = 0; i < res.length; i++) {
                 let order = res[i];
                 let created = order.order_created ? order.order_created.split('T')[0] : "";
                 let updated = order.order_updated ? order.order_updated.split('T')[0] : "";
-                table += `<tr id="row_${i}"><td>${order.id}</td><td>${order.customer_id}</td><td>${order.order_status}</td><td>${created}</td><td>${updated}</td></tr>`;
+                
+                // Create a row for the order
+                let row = `<tr id="row_${i}">
+                    <td>${order.id}</td>
+                    <td>${order.customer_id}</td>
+                    <td>${order.order_status}</td>
+                    <td>${created}</td>
+                    <td>${updated}</td>
+                    <td>`;
+                
+                // Add order items details
+                if (order.orderitems && order.orderitems.length > 0) {
+                    row += '<table class="table table-bordered table-sm">';
+                    row += '<thead><tr><th>Product ID</th><th>Quantity</th><th>Price</th></tr></thead>';
+                    row += '<tbody>';
+                    
+                    for (let j = 0; j < order.orderitems.length; j++) {
+                        let item = order.orderitems[j];
+                        row += `<tr>
+                            <td>${item.product_id}</td>
+                            <td>${item.quantity}</td>
+                            <td>$${item.price.toFixed(2)}</td>
+                        </tr>`;
+                    }
+                    
+                    row += '</tbody></table>';
+                } else {
+                    row += '<em>No items in this order</em>';
+                }
+                
+                row += '</td></tr>';
+                table += row;
+                
                 if (i == 0) {
                     firstOrder = order;
                 }
