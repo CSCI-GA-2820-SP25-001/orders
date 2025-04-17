@@ -155,17 +155,33 @@ $(function () {
             let table = '<table class="table table-striped" cellpadding="10">'
             table += '<thead><tr>'
             table += '<th class="col-md-1">ID</th>'
-            table += '<th class="col-md-3">Customer ID</th>'
-            table += '<th class="col-md-3">Status</th>'
-            table += '<th class="col-md-3">Created</th>'
-            table += '<th class="col-md-3">Updated</th>'
+            table += '<th class="col-md-2">Customer ID</th>'
+            table += '<th class="col-md-2">Status</th>'
+            table += '<th class="col-md-2">Created</th>'
+            table += '<th class="col-md-2">Updated</th>'
+            table += '<th class="col-md-3">Actions</th>'
             table += '</tr></thead><tbody>'
             
             // Get the date value
             let created = res.order_created ? res.order_created.split('T')[0] : "";
             let updated = res.order_updated ? res.order_updated.split('T')[0] : "";
             
-            table += `<tr><td>${res.id}</td><td>${res.customer_id}</td><td>${res.order_status}</td><td>${created}</td><td>${updated}</td></tr>`;
+            // Add a cancel button if the order is in pending status
+            let actionButtons = '';
+            if (res.order_status.toLowerCase() === 'pending') {
+                actionButtons = `<button class="btn btn-danger btn-sm cancel-order-btn" data-id="${res.id}">Cancel Order</button>`;
+            } else {
+                actionButtons = `<em>No actions available</em>`;
+            }
+            
+            table += `<tr>
+                <td>${res.id}</td>
+                <td>${res.customer_id}</td>
+                <td>${res.order_status}</td>
+                <td>${created}</td>
+                <td>${updated}</td>
+                <td>${actionButtons}</td>
+            </tr>`;
             table += '</tbody></table>';
             $("#search_results").append(table);
             
@@ -257,15 +273,24 @@ $(function () {
             table += '<th class="col-md-1">ID</th>'
             table += '<th class="col-md-2">Customer ID</th>'
             table += '<th class="col-md-2">Status</th>'
-            table += '<th class="col-md-2">Created</th>'
-            table += '<th class="col-md-2">Updated</th>'
+            table += '<th class="col-md-1">Created</th>'
+            table += '<th class="col-md-1">Updated</th>'
             table += '<th class="col-md-3">Order Items</th>'
+            table += '<th class="col-md-2">Actions</th>'
             table += '</tr></thead><tbody>'
             
             for(let i = 0; i < res.length; i++) {
                 let order = res[i];
                 let created = order.order_created ? order.order_created.split('T')[0] : "";
                 let updated = order.order_updated ? order.order_updated.split('T')[0] : "";
+                
+                // Add a cancel button if the order is in pending status
+                let actionButtons = '';
+                if (order.order_status.toLowerCase() === 'pending') {
+                    actionButtons = `<button class="btn btn-danger btn-sm cancel-order-btn" data-id="${order.id}">Cancel Order</button>`;
+                } else {
+                    actionButtons = `<em>No actions available</em>`;
+                }
                 
                 // Create a row for the order
                 let row = `<tr id="row_${i}">
@@ -296,7 +321,8 @@ $(function () {
                     row += '<em>No items in this order</em>';
                 }
                 
-                row += '</td></tr>';
+                row += '</td>';
+                row += `<td>${actionButtons}</td></tr>`;
                 table += row;
             }
             
@@ -308,6 +334,43 @@ $(function () {
 
         ajax.fail(function(res){
             flash_message(res.responseJSON.message);
+        });
+    });
+
+    // ****************************************
+    // Cancel an Order
+    // ****************************************
+
+    $("#cancel-btn").click(function () {
+        let order_id = $("#order_id").val();
+
+        if (!order_id) {
+            flash_message("Please enter an Order ID to cancel");
+            return;
+        }
+
+        $("#flash_message").empty();
+
+        let ajax = $.ajax({
+            type: "PUT",
+            url: `/orders/${order_id}/cancel`,
+            contentType: "application/json",
+            data: ''
+        });
+
+        ajax.done(function(res){
+            update_form_data(res);
+            flash_message("Order has been successfully canceled!");
+        });
+
+        ajax.fail(function(res){
+            if (res.status === 409) {
+                flash_message("This order cannot be canceled because it is not in 'pending' status.");
+            } else if (res.status === 404) {
+                flash_message("Order not found with the given ID");
+            } else {
+                flash_message("Server error!");
+            }
         });
     });
 
@@ -357,9 +420,10 @@ $(function () {
             table += '<th class="col-md-1">ID</th>'
             table += '<th class="col-md-2">Customer ID</th>'
             table += '<th class="col-md-2">Status</th>'
-            table += '<th class="col-md-2">Created</th>'
-            table += '<th class="col-md-2">Updated</th>'
+            table += '<th class="col-md-1">Created</th>'
+            table += '<th class="col-md-1">Updated</th>'
             table += '<th class="col-md-3">Order Items</th>'
+            table += '<th class="col-md-2">Actions</th>'
             table += '</tr></thead><tbody>'
             let firstOrder = "";
             for(let i = 0; i < res.length; i++) {
@@ -396,7 +460,17 @@ $(function () {
                     row += '<em>No items in this order</em>';
                 }
                 
-                row += '</td></tr>';
+                row += '</td>';
+                
+                // Add a cancel button if the order is in pending status
+                let actionButtons = '';
+                if (order.order_status.toLowerCase() === 'pending') {
+                    actionButtons = `<button class="btn btn-danger btn-sm cancel-order-btn" data-id="${order.id}">Cancel Order</button>`;
+                } else {
+                    actionButtons = `<em>No actions available</em>`;
+                }
+                
+                row += `<td>${actionButtons}</td></tr>`;
                 table += row;
                 
                 if (i == 0) {
@@ -418,6 +492,50 @@ $(function () {
             flash_message(res.responseJSON.message)
         });
 
+    });
+
+    // ****************************************
+    // Handle Cancel Order button clicks in search results
+    // ****************************************
+    
+    // Use event delegation for dynamically created cancel buttons
+    $(document).on('click', '.cancel-order-btn', function() {
+        let order_id = $(this).data('id');
+        
+        $("#flash_message").empty();
+        
+        let ajax = $.ajax({
+            type: "PUT",
+            url: `/orders/${order_id}/cancel`,
+            contentType: "application/json",
+            data: ''
+        });
+        
+        ajax.done(function(res) {
+            // Update the status in the table row
+            let row = $(`.cancel-order-btn[data-id="${order_id}"]`).closest('tr');
+            row.find('td:nth-child(3)').text('canceled'); // Update status cell
+            
+            // Replace the cancel button with "No actions available"
+            $(`.cancel-order-btn[data-id="${order_id}"]`).parent().html('<em>No actions available</em>');
+            
+            // If this order is currently loaded in the form, update the form too
+            if ($("#order_id").val() == order_id) {
+                update_form_data(res);
+            }
+            
+            flash_message("Order has been successfully canceled!");
+        });
+        
+        ajax.fail(function(res) {
+            if (res.status === 409) {
+                flash_message("This order cannot be canceled because it is not in 'pending' status.");
+            } else if (res.status === 404) {
+                flash_message("Order not found with the given ID");
+            } else {
+                flash_message("Server error!");
+            }
+        });
     });
 
 })
