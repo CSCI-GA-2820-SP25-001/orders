@@ -76,6 +76,20 @@ Utility Functions:
 
 check_content_type (Checks that the media type is correct)
 
+## UI Features
+
+The web interface provides the following features:
+
+1. **Search for Orders**: Search for orders by ID, customer ID, status, or creation date.
+2. **View Order History**: View all orders for a specific customer.
+3. **Create, Update, and Delete Orders**: Manage orders through a simple form interface.
+4. **Update Order Item Quantities**: Modify the quantity of items within an order using:
+   - A numeric input field for direct entry
+   - Plus/minus buttons for incremental changes
+   - Validation to prevent negative or invalid quantities
+   - Real-time UI updates after successful quantity changes
+   - Error messages for failed updates
+
 
 ```
 

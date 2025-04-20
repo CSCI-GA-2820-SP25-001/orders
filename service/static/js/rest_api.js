@@ -27,6 +27,29 @@ $(function () {
         $("#flash_message").append(message);
     }
 
+    // Show the update item form with the item data
+    function show_update_item_form(order_id, item) {
+        // Fill in the form fields
+        $("#update_order_id").val(order_id);
+        $("#update_item_id").val(item.id);
+        $("#update_product_id").val(item.product_id);
+        $("#update_price").val(item.price.toFixed(2));
+        $("#update_quantity").val(item.quantity);
+        
+        // Show the form
+        $("#update_item_form").show();
+        
+        // Scroll to the form
+        $('html, body').animate({
+            scrollTop: $("#update_item_form").offset().top
+        }, 500);
+    }
+
+    // Hide the update item form
+    function hide_update_item_form() {
+        $("#update_item_form").hide();
+    }
+
     // ****************************************
     // Create an Order
     // ****************************************
@@ -221,6 +244,7 @@ $(function () {
         $("#flash_message").empty();
         $("#search_results").empty();
         clear_form_data()
+        hide_update_item_form();
     });
 
     // ****************************************
@@ -279,7 +303,7 @@ $(function () {
                 // Add order items details
                 if (order.orderitems && order.orderitems.length > 0) {
                     row += '<table class="table table-bordered table-sm">';
-                    row += '<thead><tr><th>Product ID</th><th>Quantity</th><th>Price</th></tr></thead>';
+                    row += '<thead><tr><th>Product ID</th><th>Quantity</th><th>Price</th><th>Actions</th></tr></thead>';
                     row += '<tbody>';
                     
                     for (let j = 0; j < order.orderitems.length; j++) {
@@ -288,6 +312,12 @@ $(function () {
                             <td>${item.product_id}</td>
                             <td>${item.quantity}</td>
                             <td>$${item.price.toFixed(2)}</td>
+                            <td><button class="btn btn-sm btn-primary update-quantity-btn" 
+                                data-order-id="${order.id}" 
+                                data-item-id="${item.id}" 
+                                data-product-id="${item.product_id}" 
+                                data-quantity="${item.quantity}" 
+                                data-price="${item.price}">Update Quantity</button></td>
                         </tr>`;
                     }
                     
@@ -302,6 +332,18 @@ $(function () {
             
             table += '</tbody></table>';
             $("#search_results").append(table);
+            
+            // Add event listeners to the update quantity buttons
+            $(".update-quantity-btn").click(function() {
+                let order_id = $(this).data("order-id");
+                let item = {
+                    id: $(this).data("item-id"),
+                    product_id: $(this).data("product-id"),
+                    quantity: $(this).data("quantity"),
+                    price: $(this).data("price")
+                };
+                show_update_item_form(order_id, item);
+            });
             
             flash_message(`Found ${res.length} order(s) for Customer ID: ${customer_id}`);
         });
@@ -379,7 +421,7 @@ $(function () {
                 // Add order items details
                 if (order.orderitems && order.orderitems.length > 0) {
                     row += '<table class="table table-bordered table-sm">';
-                    row += '<thead><tr><th>Product ID</th><th>Quantity</th><th>Price</th></tr></thead>';
+                    row += '<thead><tr><th>Product ID</th><th>Quantity</th><th>Price</th><th>Actions</th></tr></thead>';
                     row += '<tbody>';
                     
                     for (let j = 0; j < order.orderitems.length; j++) {
@@ -388,6 +430,12 @@ $(function () {
                             <td>${item.product_id}</td>
                             <td>${item.quantity}</td>
                             <td>$${item.price.toFixed(2)}</td>
+                            <td><button class="btn btn-sm btn-primary update-quantity-btn" 
+                                data-order-id="${order.id}" 
+                                data-item-id="${item.id}" 
+                                data-product-id="${item.product_id}" 
+                                data-quantity="${item.quantity}" 
+                                data-price="${item.price}">Update Quantity</button></td>
                         </tr>`;
                     }
                     
@@ -406,6 +454,18 @@ $(function () {
             table += '</tbody></table>';
             $("#search_results").append(table);
 
+            // Add event listeners to the update quantity buttons
+            $(".update-quantity-btn").click(function() {
+                let order_id = $(this).data("order-id");
+                let item = {
+                    id: $(this).data("item-id"),
+                    product_id: $(this).data("product-id"),
+                    quantity: $(this).data("quantity"),
+                    price: $(this).data("price")
+                };
+                show_update_item_form(order_id, item);
+            });
+
             // copy the first result to the form
             if (firstOrder != "") {
                 update_form_data(firstOrder)
@@ -418,6 +478,84 @@ $(function () {
             flash_message(res.responseJSON.message)
         });
 
+    });
+
+    // ****************************************
+    // Update Order Item Quantity
+    // ****************************************
+
+    // Increase quantity button
+    $("#increase-qty-btn").click(function() {
+        let current_qty = parseInt($("#update_quantity").val());
+        $("#update_quantity").val(current_qty + 1);
+    });
+
+    // Decrease quantity button
+    $("#decrease-qty-btn").click(function() {
+        let current_qty = parseInt($("#update_quantity").val());
+        if (current_qty > 1) {
+            $("#update_quantity").val(current_qty - 1);
+        }
+    });
+
+    // Cancel update button
+    $("#cancel-update-btn").click(function() {
+        hide_update_item_form();
+    });
+
+    // Update item button
+    $("#update-item-btn").click(function() {
+        let order_id = $("#update_order_id").val();
+        let item_id = $("#update_item_id").val();
+        let product_id = $("#update_product_id").val();
+        let price = parseFloat($("#update_price").val());
+        let quantity = parseInt($("#update_quantity").val());
+
+        // Validate quantity
+        if (isNaN(quantity) || quantity < 1) {
+            flash_message("Quantity must be a positive number");
+            return;
+        }
+
+        // Prepare data for API call
+        let data = {
+            "order_id": parseInt(order_id),
+            "product_id": parseInt(product_id),
+            "quantity": quantity,
+            "price": price
+        };
+
+        $("#flash_message").empty();
+
+        // Make API call to update the item
+        let ajax = $.ajax({
+            type: "PUT",
+            url: `/orders/${order_id}/items/${item_id}`,
+            contentType: "application/json",
+            data: JSON.stringify(data)
+        });
+
+        ajax.done(function(res) {
+            // Hide the update form
+            hide_update_item_form();
+            
+            // Refresh the order display to show updated quantity
+            if ($("#history_customer_id").val()) {
+                $("#view-history-btn").click();
+            } else if ($("#order_customer_id").val() || $("#order_status").val() || $("#order_created").val()) {
+                $("#search-btn").click();
+            }
+            
+            flash_message("Item quantity updated successfully");
+        });
+
+        ajax.fail(function(res) {
+            let error_msg = "Failed to update item quantity";
+            if (res.responseJSON && res.responseJSON.message) {
+                error_msg = res.responseJSON.message;
+            }
+            flash_message(error_msg);
+        });
     });
 
 })
