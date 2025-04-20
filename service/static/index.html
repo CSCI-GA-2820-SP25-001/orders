@@ -14,36 +14,6 @@
           <h1>Order Demo REST API Service</h1>
       </div>
 
-      <!-- Search by Order ID -->
-      <div class="well">
-        <div class="form-horizontal">
-          <div class="form-group">
-            <label class="control-label col-sm-2" for="search_order_id">Search Order by ID:</label>
-            <div class="col-sm-6">
-              <input type="text" class="form-control" id="search_order_id" placeholder="Enter Order ID to search">
-            </div>
-            <div class="col-sm-4">
-              <button type="submit" class="btn btn-primary" id="search-by-id-btn">Search</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- View Order History by Customer ID -->
-      <div class="well">
-        <div class="form-horizontal">
-          <div class="form-group">
-            <label class="control-label col-sm-2" for="history_customer_id">View Order History:</label>
-            <div class="col-sm-6">
-              <input type="text" class="form-control" id="history_customer_id" placeholder="Enter Customer ID to view order history">
-            </div>
-            <div class="col-sm-4">
-              <button type="submit" class="btn btn-success" id="view-history-btn">View History</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Flash Message -->
       <div class="table-responsive">
         <table class="table">
@@ -101,6 +71,7 @@
                 <button type="submit" class="btn btn-primary" id="clear-btn">Clear</button>
                 <button type="submit" class="btn btn-success" id="create-btn">Create</button>
                 <button type="submit" class="btn btn-warning" id="update-btn">Update</button>
+                <button type="submit" class="btn btn-danger" id="cancel-btn">Cancel Order</button>
               </div>
             </div>
           </div> <!-- form horizontal -->
