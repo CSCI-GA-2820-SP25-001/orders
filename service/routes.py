@@ -307,7 +307,9 @@ def update_orders(order_id):
             data["order_created"] = order.order_created.strftime("%Y-%m-%dT%H:%M:%S")
         else:
             # If order_created is None, set it to the current time
-            data["order_created"] = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            data["order_created"] = datetime.datetime.now().strftime(
+                "%Y-%m-%dT%H:%M:%S"
+            )
 
     # If order_updated is not in the request data, set it to the current time
     if "order_updated" not in data:
@@ -315,7 +317,7 @@ def update_orders(order_id):
 
     # If orderitems is not in the request data, use the existing items
     if "orderitems" not in data:
-        data["orderitems"] = [item.serialize() for item in order.orderitems]
+        data["orderitems"] = []
 
     # Log the complete data being processed
     app.logger.info("Complete data for deserialize: %s", data)

@@ -70,30 +70,55 @@ def step_impl(context: Any, text_string: str) -> None:
 
 @when('I set the "{element_name}" to "{text_string}"')
 def step_impl(context: Any, element_name: str, text_string: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
-    element = context.driver.find_element(By.ID, element_id)
+    # First try with the ID_PREFIX (for backward compatibility)
+    try:
+        element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+        element = context.driver.find_element(By.ID, element_id)
+    except:
+        # If not found, try without the prefix (for our new elements)
+        element_id = element_name.lower().replace(" ", "_")
+        element = context.driver.find_element(By.ID, element_id)
+    
     element.clear()
     element.send_keys(text_string)
 
 
 @when('I select "{text}" in the "{element_name}" dropdown')
 def step_impl(context: Any, text: str, element_name: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
-    element = Select(context.driver.find_element(By.ID, element_id))
+    # First try with the ID_PREFIX (for backward compatibility)
+    try:
+        element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+        element = Select(context.driver.find_element(By.ID, element_id))
+    except:
+        # If not found, try without the prefix (for our new elements)
+        element_id = element_name.lower().replace(" ", "_")
+        element = Select(context.driver.find_element(By.ID, element_id))
     element.select_by_visible_text(text)
 
 
 @then('I should see "{text}" in the "{element_name}" dropdown')
 def step_impl(context: Any, text: str, element_name: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
-    element = Select(context.driver.find_element(By.ID, element_id))
+    # First try with the ID_PREFIX (for backward compatibility)
+    try:
+        element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+        element = Select(context.driver.find_element(By.ID, element_id))
+    except:
+        # If not found, try without the prefix (for our new elements)
+        element_id = element_name.lower().replace(" ", "_")
+        element = Select(context.driver.find_element(By.ID, element_id))
     assert element.first_selected_option.text == text
 
 
 @then('the "{element_name}" field should be empty')
 def step_impl(context: Any, element_name: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
-    element = context.driver.find_element(By.ID, element_id)
+    # First try with the ID_PREFIX (for backward compatibility)
+    try:
+        element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+        element = context.driver.find_element(By.ID, element_id)
+    except:
+        # If not found, try without the prefix (for our new elements)
+        element_id = element_name.lower().replace(" ", "_")
+        element = context.driver.find_element(By.ID, element_id)
     assert element.get_attribute("value") == ""
 
 
@@ -102,20 +127,40 @@ def step_impl(context: Any, element_name: str) -> None:
 ##################################################################
 @when('I copy the "{element_name}" field')
 def step_impl(context: Any, element_name: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
-    element = WebDriverWait(context.driver, context.wait_seconds).until(
-        expected_conditions.presence_of_element_located((By.ID, element_id))
-    )
+    # Use a shorter wait time for better performance
+    wait_time = min(context.wait_seconds, 3)
+    # First try with the ID_PREFIX (for backward compatibility)
+    try:
+        element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+        element = WebDriverWait(context.driver, wait_time).until(
+            expected_conditions.presence_of_element_located((By.ID, element_id))
+        )
+    except:
+        # If not found, try without the prefix (for our new elements)
+        element_id = element_name.lower().replace(" ", "_")
+        element = WebDriverWait(context.driver, wait_time).until(
+            expected_conditions.presence_of_element_located((By.ID, element_id))
+        )
     context.clipboard = element.get_attribute("value")
     logging.info("Clipboard contains: %s", context.clipboard)
 
 
 @when('I paste the "{element_name}" field')
 def step_impl(context: Any, element_name: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
-    element = WebDriverWait(context.driver, context.wait_seconds).until(
-        expected_conditions.presence_of_element_located((By.ID, element_id))
-    )
+    # Use a shorter wait time for better performance
+    wait_time = min(context.wait_seconds, 3)
+    # First try with the ID_PREFIX (for backward compatibility)
+    try:
+        element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+        element = WebDriverWait(context.driver, wait_time).until(
+            expected_conditions.presence_of_element_located((By.ID, element_id))
+        )
+    except:
+        # If not found, try without the prefix (for our new elements)
+        element_id = element_name.lower().replace(" ", "_")
+        element = WebDriverWait(context.driver, wait_time).until(
+            expected_conditions.presence_of_element_located((By.ID, element_id))
+        )
     element.clear()
     element.send_keys(context.clipboard)
 
@@ -132,12 +177,27 @@ def step_impl(context: Any, element_name: str) -> None:
 @when('I press the "{button}" button')
 def step_impl(context: Any, button: str) -> None:
     button_id = button.lower().replace(" ", "_") + "-btn"
-    context.driver.find_element(By.ID, button_id).click()
+    print(f"Looking for button with ID: {button_id}")
+    try:
+        element = context.driver.find_element(By.ID, button_id)
+        print(f"Found button with ID: {button_id}")
+        element.click()
+        print(f"Clicked button with ID: {button_id}")
+    except Exception as e:
+        print(f"Error clicking button with ID {button_id}: {str(e)}")
+        # List all buttons on the page
+        buttons = context.driver.find_elements(By.TAG_NAME, "button")
+        print(f"Found {len(buttons)} buttons on the page:")
+        for btn in buttons:
+            print(f"  Button ID: {btn.get_attribute('id')}, Text: {btn.text}")
+        raise
 
 
 @then('I should see "{name}" in the results')
 def step_impl(context: Any, name: str) -> None:
-    found = WebDriverWait(context.driver, context.wait_seconds).until(
+    # Use a shorter wait time for better performance
+    wait_time = min(context.wait_seconds, 3)
+    found = WebDriverWait(context.driver, wait_time).until(
         expected_conditions.text_to_be_present_in_element(
             (By.ID, "search_results"), name
         )
@@ -154,13 +214,27 @@ def step_impl(context: Any, name: str) -> None:
 @then('I should see the message "{message}"')
 def step_impl(context: Any, message: str) -> None:
     # Uncomment next line to take a screenshot of the web page for debugging
-    # save_screenshot(context, message)
-    found = WebDriverWait(context.driver, context.wait_seconds).until(
-        expected_conditions.text_to_be_present_in_element(
-            (By.ID, "flash_message"), message
+    save_screenshot(context, message)
+    # Use a shorter wait time for better performance
+    wait_time = min(context.wait_seconds, 3)
+    print(f"Looking for message: '{message}' in flash_message element")
+    try:
+        found = WebDriverWait(context.driver, wait_time).until(
+            expected_conditions.text_to_be_present_in_element(
+                (By.ID, "flash_message"), message
+            )
         )
-    )
-    assert found
+        print(f"Found message: '{message}' in flash_message element")
+        assert found
+    except Exception as e:
+        print(f"Error finding message '{message}': {str(e)}")
+        # Get the actual message
+        try:
+            flash_message = context.driver.find_element(By.ID, "flash_message")
+            print(f"Actual message in flash_message element: '{flash_message.text}'")
+        except:
+            print("Could not find flash_message element")
+        raise
 
 
 ##################################################################
@@ -173,20 +247,42 @@ def step_impl(context: Any, message: str) -> None:
 
 @then('I should see "{text_string}" in the "{element_name}" field')
 def step_impl(context: Any, text_string: str, element_name: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
-    found = WebDriverWait(context.driver, context.wait_seconds).until(
-        expected_conditions.text_to_be_present_in_element_value(
-            (By.ID, element_id), text_string
+    # Use a shorter wait time for better performance
+    wait_time = min(context.wait_seconds, 3)
+    # First try with the ID_PREFIX (for backward compatibility)
+    try:
+        element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+        found = WebDriverWait(context.driver, wait_time).until(
+            expected_conditions.text_to_be_present_in_element_value(
+                (By.ID, element_id), text_string
+            )
         )
-    )
+    except:
+        # If not found, try without the prefix (for our new elements)
+        element_id = element_name.lower().replace(" ", "_")
+        found = WebDriverWait(context.driver, wait_time).until(
+            expected_conditions.text_to_be_present_in_element_value(
+                (By.ID, element_id), text_string
+            )
+        )
     assert found
 
 
 @when('I change "{element_name}" to "{text_string}"')
 def step_impl(context: Any, element_name: str, text_string: str) -> None:
-    element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
-    element = WebDriverWait(context.driver, context.wait_seconds).until(
-        expected_conditions.presence_of_element_located((By.ID, element_id))
-    )
+    # Use a shorter wait time for better performance
+    wait_time = min(context.wait_seconds, 3)
+    # First try with the ID_PREFIX (for backward compatibility)
+    try:
+        element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
+        element = WebDriverWait(context.driver, wait_time).until(
+            expected_conditions.presence_of_element_located((By.ID, element_id))
+        )
+    except:
+        # If not found, try without the prefix (for our new elements)
+        element_id = element_name.lower().replace(" ", "_")
+        element = WebDriverWait(context.driver, wait_time).until(
+            expected_conditions.presence_of_element_located((By.ID, element_id))
+        )
     element.clear()
     element.send_keys(text_string)
