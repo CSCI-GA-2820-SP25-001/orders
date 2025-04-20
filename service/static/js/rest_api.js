@@ -106,7 +106,7 @@ $(function () {
     });
 
     // ****************************************
-    // Retrieve an Order (now with Search Order by ID functionality)
+    // Retrieve an Order
     // ****************************************
 
     $("#retrieve-btn").click(function () {
@@ -132,7 +132,8 @@ $(function () {
             table += '<th class="col-md-2">Status</th>'
             table += '<th class="col-md-2">Created</th>'
             table += '<th class="col-md-2">Updated</th>'
-            table += '<th class="col-md-3">Actions</th>'
+            table += '<th class="col-md-2">Order Items</th>'
+            table += '<th class="col-md-1">Actions</th>'
             table += '</tr></thead><tbody>'
             
             // Get the date value
@@ -147,12 +148,35 @@ $(function () {
                 actionButtons = `<em>No actions available</em>`;
             }
             
+            // Add order items details
+            let itemsCell = '';
+            if (res.orderitems && res.orderitems.length > 0) {
+                itemsCell += '<table class="table table-bordered table-sm">';
+                itemsCell += '<thead><tr><th>ID</th><th>Product ID</th><th>Quantity</th><th>Price</th></tr></thead>';
+                itemsCell += '<tbody>';
+                
+                for (let j = 0; j < res.orderitems.length; j++) {
+                    let item = res.orderitems[j];
+                    itemsCell += `<tr>
+                        <td>${item.id}</td>
+                        <td>${item.product_id}</td>
+                        <td>${item.quantity}</td>
+                        <td>$${item.price.toFixed(2)}</td>
+                    </tr>`;
+                }
+                
+                itemsCell += '</tbody></table>';
+            } else {
+                itemsCell = '<em>No items in this order</em>';
+            }
+            
             table += `<tr>
                 <td>${res.id}</td>
                 <td>${res.customer_id}</td>
                 <td>${res.order_status}</td>
                 <td>${created}</td>
                 <td>${updated}</td>
+                <td>${itemsCell}</td>
                 <td>${actionButtons}</td>
             </tr>`;
             table += '</tbody></table>';
@@ -212,85 +236,6 @@ $(function () {
         $("#flash_message").empty();
         $("#search_results").empty();
         clear_form_data()
-    });
-
-    // ****************************************
-    // Create an Order Item
-    // ****************************************
-
-    $("#create_item-btn").click(function () { 
-        let order_id = $("#item_order_id").val();
-        
-        if (!order_id) {
-            flash_message("Please enter an Order ID");
-            return;
-        }
-        
-        let product_id = $("#item_product_id").val();
-        let quantity = $("#item_quantity").val();
-        let price = $("#item_price").val();
-        
-        if (!product_id) {
-            flash_message("Product ID is required");
-            return;
-        }
-        
-        if (!quantity || quantity < 1) {
-            flash_message("Quantity must be at least 1");
-            return;
-        }
-        
-        if (!price || price <= 0) {
-            flash_message("Price must be greater than 0");
-            return;
-        }
-        
-        let data = {
-            "product_id": parseInt(product_id),
-            "quantity": parseInt(quantity),
-            "price": parseFloat(price)
-        };
-        
-        $("#flash_message").empty();
-         
-        let ajax = $.ajax({
-            type: "POST", 
-            url: `/orders/${order_id}/items`,
-            contentType: "application/json",
-            data: JSON.stringify(data),
-        });
-        
-        ajax.done(function(res){
-            console.log("Order item created successfully:", res);
-            // Clear the item form fields
-            $("#item_product_id").val("");
-            $("#item_quantity").val("1");
-            $("#item_price").val(""); 
-            
-            // Refresh the order to show the new item
-            let retrieveAjax = $.ajax({
-                type: "GET",
-                url: `/orders/${order_id}`,
-                contentType: "application/json",
-                data: ''
-            });
-            
-            retrieveAjax.done(function(orderRes){
-                console.log("Success:", orderRes);
-                update_form_data(orderRes);
-                flash_message("Success");
-            });
-            
-            retrieveAjax.fail(function(err){
-                console.error("Failed to refresh order details:", err);
-                flash_message("Order item created, but failed to refresh order details");
-            });
-        });
-        
-        ajax.fail(function(res){
-            console.error("Failed to create order item:", res);
-            flash_message(res.responseJSON ? res.responseJSON.message : "Error creating order item");
-        });
     });
 
     // ****************************************
