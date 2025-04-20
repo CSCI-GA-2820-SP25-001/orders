@@ -37,3 +37,76 @@ Scenario: List items for an order via the web UI
     When I visit the "Home Page"
     # Skip this test for now as the web UI doesn't support listing order items yet
     # This scenario will be implemented when the web UI is updated
+
+Scenario: Create an Order Item via the web UI
+    When I visit the "Home Page"
+    # First create a new order
+    And I set the "order_customer_id" to "1"
+    And I set the "order_status" to "PENDING"
+    And I press the "Create" button
+    Then I should see the message "Success"
+    # Get the order ID from the form
+    When I set the "item_product_id" to "999"
+    And I set the "item_quantity" to "5"
+    And I set the "item_price" to "24.99"
+    When I press the "create item" button
+    Then I should see the message "Success"
+    # Search for the order to verify the item was added
+    When I press the "Search" button
+    Then I should see "999" in the results
+    And I should see "5" in the results
+    And I should see "$24.99" in the results
+
+Scenario: Create an Order Item with a specific Order ID
+    When I visit the "Home Page"
+    # First create a new order
+    And I set the "order_customer_id" to "2"
+    And I set the "order_status" to "SHIPPED"
+    And I press the "Create" button
+    Then I should see the message "Success"
+    # Get the order ID and use it directly
+    When I set the "item_product_id" to "888"
+    And I set the "item_quantity" to "3"
+    And I set the "item_price" to "15.75"
+    And I press the "create item" button
+    Then I should see the message "Success"
+    # Search for the order to verify the item was added
+    When I press the "Search" button
+    Then I should see "888" in the results
+    And I should see "3" in the results
+    And I should see "$15.75" in the results
+
+Scenario: Attempt to create an Order Item without an Order ID
+    When I visit the "Home Page"
+    And I press the "Clear" button
+    And I set the "item_product_id" to "777"
+    And I set the "item_quantity" to "2"
+    And I set the "item_price" to "9.99"
+    And I press the "create item" button
+    Then I should see the message "Please enter an Order ID"
+
+Scenario: Attempt to create an Order Item without a Product ID
+    When I visit the "Home Page"
+    And I set the "item_order_id" to "1"
+    And I set the "item_quantity" to "2"
+    And I set the "item_price" to "9.99"
+    And I press the "create item" button
+    Then I should see the message "Product ID is required"
+
+Scenario: Attempt to create an Order Item with invalid quantity
+    When I visit the "Home Page"
+    And I set the "item_order_id" to "1"
+    And I set the "item_product_id" to "777"
+    And I set the "item_quantity" to "0"
+    And I set the "item_price" to "9.99"
+    And I press the "create item" button
+    Then I should see the message "Quantity must be at least 1"
+
+Scenario: Attempt to create an Order Item with invalid price
+    When I visit the "Home Page"
+    And I set the "item_order_id" to "1"
+    And I set the "item_product_id" to "777"
+    And I set the "item_quantity" to "2"
+    And I set the "item_price" to "0"
+    And I press the "create item" button
+    Then I should see the message "Price must be greater than 0"
