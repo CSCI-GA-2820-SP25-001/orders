@@ -31,8 +31,10 @@ from behave import when, then  # pylint: disable=no-name-in-module
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
 
 ID_PREFIX = "pet_"
+
 
 def save_screenshot(context: Any, filename: str) -> None:
     """Takes a snapshot of the web page for debugging and validation
@@ -74,11 +76,11 @@ def step_impl(context: Any, element_name: str, text_string: str) -> None:
     try:
         element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
         element = context.driver.find_element(By.ID, element_id)
-    except:
+    except NoSuchElementException:
         # If not found, try without the prefix (for our new elements)
         element_id = element_name.lower().replace(" ", "_")
         element = context.driver.find_element(By.ID, element_id)
-    
+
     element.clear()
     element.send_keys(text_string)
 
@@ -89,7 +91,7 @@ def step_impl(context: Any, text: str, element_name: str) -> None:
     try:
         element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
         element = Select(context.driver.find_element(By.ID, element_id))
-    except:
+    except NoSuchElementException:
         # If not found, try without the prefix (for our new elements)
         element_id = element_name.lower().replace(" ", "_")
         element = Select(context.driver.find_element(By.ID, element_id))
@@ -102,7 +104,7 @@ def step_impl(context: Any, text: str, element_name: str) -> None:
     try:
         element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
         element = Select(context.driver.find_element(By.ID, element_id))
-    except:
+    except NoSuchElementException:
         # If not found, try without the prefix (for our new elements)
         element_id = element_name.lower().replace(" ", "_")
         element = Select(context.driver.find_element(By.ID, element_id))
@@ -115,7 +117,7 @@ def step_impl(context: Any, element_name: str) -> None:
     try:
         element_id = ID_PREFIX + element_name.lower().replace(" ", "_")
         element = context.driver.find_element(By.ID, element_id)
-    except:
+    except NoSuchElementException:
         # If not found, try without the prefix (for our new elements)
         element_id = element_name.lower().replace(" ", "_")
         element = context.driver.find_element(By.ID, element_id)
@@ -135,7 +137,7 @@ def step_impl(context: Any, element_name: str) -> None:
         element = WebDriverWait(context.driver, wait_time).until(
             expected_conditions.presence_of_element_located((By.ID, element_id))
         )
-    except:
+    except WebDriverException:
         # If not found, try without the prefix (for our new elements)
         element_id = element_name.lower().replace(" ", "_")
         element = WebDriverWait(context.driver, wait_time).until(
@@ -155,7 +157,7 @@ def step_impl(context: Any, element_name: str) -> None:
         element = WebDriverWait(context.driver, wait_time).until(
             expected_conditions.presence_of_element_located((By.ID, element_id))
         )
-    except:
+    except WebDriverException:
         # If not found, try without the prefix (for our new elements)
         element_id = element_name.lower().replace(" ", "_")
         element = WebDriverWait(context.driver, wait_time).until(
@@ -183,7 +185,7 @@ def step_impl(context: Any, button: str) -> None:
         print(f"Found button with ID: {button_id}")
         element.click()
         print(f"Clicked button with ID: {button_id}")
-    except Exception as e:
+    except WebDriverException as e:
         print(f"Error clicking button with ID {button_id}: {str(e)}")
         # List all buttons on the page
         buttons = context.driver.find_elements(By.TAG_NAME, "button")
@@ -226,13 +228,13 @@ def step_impl(context: Any, message: str) -> None:
         )
         print(f"Found message: '{message}' in flash_message element")
         assert found
-    except Exception as e:
+    except WebDriverException as e:
         print(f"Error finding message '{message}': {str(e)}")
         # Get the actual message
         try:
             flash_message = context.driver.find_element(By.ID, "flash_message")
             print(f"Actual message in flash_message element: '{flash_message.text}'")
-        except:
+        except NoSuchElementException:
             print("Could not find flash_message element")
         raise
 
@@ -257,7 +259,7 @@ def step_impl(context: Any, text_string: str, element_name: str) -> None:
                 (By.ID, element_id), text_string
             )
         )
-    except:
+    except WebDriverException:
         # If not found, try without the prefix (for our new elements)
         element_id = element_name.lower().replace(" ", "_")
         found = WebDriverWait(context.driver, wait_time).until(
@@ -278,7 +280,7 @@ def step_impl(context: Any, element_name: str, text_string: str) -> None:
         element = WebDriverWait(context.driver, wait_time).until(
             expected_conditions.presence_of_element_located((By.ID, element_id))
         )
-    except:
+    except WebDriverException:
         # If not found, try without the prefix (for our new elements)
         element_id = element_name.lower().replace(" ", "_")
         element = WebDriverWait(context.driver, wait_time).until(
