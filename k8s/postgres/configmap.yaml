@@ -4,4 +4,4 @@ metadata:
   name: postgres-config
 data:
   postgres_user: postgres
-  postgres_db: petstore 
+  postgres_db: orders 
