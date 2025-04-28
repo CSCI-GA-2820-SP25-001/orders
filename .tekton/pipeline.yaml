@@ -61,7 +61,7 @@ spec:
       workspaces:
         - name: output
           workspace: pipeline-workspace
- - name: pytest-env
+   - name: pytest-env
       params:
         - name: pytest-args
           value: []
@@ -74,6 +74,24 @@ spec:
       taskRef:
         kind: Task
         name: pytest-env
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    - name: pylint
+      params:
+        - name: image
+          value: 'quay.io/rofrano/python:3.11-slim'
+        - name: path
+          value: .
+        - name: args
+          value: []
+        - name: requirements-file
+          value: requirements.txt
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: pylint
       workspaces:
         - name: source
           workspace: pipeline-workspace
