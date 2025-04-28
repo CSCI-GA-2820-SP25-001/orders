@@ -61,7 +61,7 @@ spec:
       workspaces:
         - name: output
           workspace: pipeline-workspace
-   - name: pytest-env
+    - name: pytest-env
       params:
         - name: pytest-args
           value: []
