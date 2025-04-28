@@ -95,5 +95,39 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-workspace
+    - name: buildah
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE_NAME)
+        - name: DOCKERFILE
+          value: ./Dockerfile
+        - name: BUILD_ARGS
+          value:
+            - ''
+        - name: CONTEXT
+          value: .
+        - name: STORAGE_DRIVER
+          value: vfs
+        - name: FORMAT
+          value: oci
+        - name: BUILD_EXTRA_ARGS
+          value: ''
+        - name: PUSH_EXTRA_ARGS
+          value: ''
+        - name: SKIP_PUSH
+          value: 'false'
+        - name: TLS_VERIFY
+          value: 'true'
+        - name: VERBOSE
+          value: 'false'
+      runAfter:
+        - pytest-env
+        - pylint
+      taskRef:
+        kind: Task
+        name: buildah
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
   workspaces:
     - name: pipeline-workspace
