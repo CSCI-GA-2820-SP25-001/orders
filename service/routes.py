@@ -339,7 +339,7 @@ def update_items(order_id, item_id):
 
     This endpoint will update an Item based the body that is posted
     """
-    app.logger.info("Request to update Item %s for Order id: %s", (item_id, order_id))
+    app.logger.info("Request to update Item %s for Order id: %s", item_id, order_id)
     check_content_type("application/json")
 
     # See if the item exists and abort if it doesn't
@@ -350,9 +350,42 @@ def update_items(order_id, item_id):
             f"Item with id '{item_id}' could not be found.",
         )
 
+    # Check if the order exists
+    order = Order.find(order_id)
+    if not order:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Order with id '{order_id}' could not be found.",
+        )
+
+    # Check if the order_id in the path matches the order_id of the item
+    if orderitem.order_id != order_id:
+        abort(
+            status.HTTP_400_BAD_REQUEST,
+            f"Item with id '{item_id}' does not belong to order with id '{order_id}'.",
+        )
+
+    # Get the request data
+    data = request.get_json()
+
+    # Validate quantity
+    if "quantity" in data:
+        quantity = data.get("quantity")
+
+        # Check if quantity is a positive integer
+        if not isinstance(quantity, int) or quantity <= 0:
+            abort(
+                status.HTTP_400_BAD_REQUEST,
+                "Quantity must be a positive integer.",
+            )
+
     # Update from the json in the body of the request
     orderitem.deserialize(request.get_json())
     orderitem.update()
+
+    # Update the order's updated timestamp
+    order.order_updated = datetime.datetime.now()
+    order.update()
 
     return jsonify(orderitem.serialize()), status.HTTP_200_OK
 

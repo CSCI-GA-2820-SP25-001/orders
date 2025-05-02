@@ -475,6 +475,100 @@ $(function () {
     });
 
     // ****************************************
+    // Update an Order Item Quantity
+    // ****************************************
+
+    $("#update_item-btn").click(function () {
+        let order_id = $("#item_order_id").val();
+        let item_id = $("#item_id").val();
+        let quantity = $("#item_quantity").val();
+        
+        if (!order_id) {
+            flash_message("Please enter an Order ID");
+            return;
+        }
+        
+        if (!item_id) {
+            flash_message("Please enter an Item ID");
+            return;
+        }
+        
+        if (!quantity || quantity < 1) {
+            flash_message("Quantity must be at least 1");
+            return;
+        }
+        
+        // First, get the current item to preserve other fields
+        $("#flash_message").empty();
+        
+        let getItemAjax = $.ajax({
+            type: "GET",
+            url: `/orders/${order_id}/items/${item_id}`,
+            contentType: "application/json",
+            data: ''
+        });
+        
+        getItemAjax.done(function(currentItem) {
+            // Now update with the new quantity
+            let data = {
+                "order_id": parseInt(order_id),
+                "product_id": currentItem.product_id,
+                "quantity": parseInt(quantity),
+                "price": currentItem.price
+            };
+            
+            let updateAjax = $.ajax({
+                type: "PUT",
+                url: `/orders/${order_id}/items/${item_id}`,
+                contentType: "application/json",
+                data: JSON.stringify(data)
+            });
+            
+            updateAjax.done(function(res) {
+                // Clear the item ID field
+                $("#item_id").val("");
+                
+                // Refresh the order to show the updated item
+                let retrieveAjax = $.ajax({
+                    type: "GET",
+                    url: `/orders/${order_id}`,
+                    contentType: "application/json",
+                    data: ''
+                });
+                
+                retrieveAjax.done(function(orderRes) {
+                    update_form_data(orderRes);
+                    
+                    // If the order is currently displayed in search results, update it there too
+                    if ($("#search_results").html().includes(`Order ID: ${order_id}`)) {
+                        $("#retrieve-btn").click(); // Refresh the display
+                    }
+                    
+                    flash_message("Item quantity updated successfully");
+                });
+                
+                retrieveAjax.fail(function(err) {
+                    flash_message("Item quantity updated, but failed to refresh order details");
+                });
+            });
+            
+            updateAjax.fail(function(res) {
+                if (res.status === 400) {
+                    flash_message("Invalid quantity. Please check stock limits.");
+                } else if (res.status === 404) {
+                    flash_message("Order item not found");
+                } else {
+                    flash_message("Error updating item quantity");
+                }
+            });
+        });
+        
+        getItemAjax.fail(function(res) {
+            flash_message("Failed to retrieve item. Please check the Order ID and Item ID.");
+        });
+    });
+
+    // ****************************************
     // Handle Cancel Order button clicks in search results
     // ****************************************
     
