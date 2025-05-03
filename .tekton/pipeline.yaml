@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
-  name: cd-pipeline-v2
+  name: cd-pipeline
 spec:
   params:
     - default: 'https://github.com/CSCI-GA-2820-SP25-001/orders.git'
