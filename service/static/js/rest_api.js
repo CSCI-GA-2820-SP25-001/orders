@@ -612,4 +612,122 @@ $(function () {
         });
     });
 
+    // ****************************************
+    // Search for Items within an Order
+    // ****************************************
+
+    // Show the item search section when an order is retrieved
+    $("#retrieve-btn").click(function() {
+        // The search section will be shown after the order is successfully retrieved
+        // This is handled in the ajax.done function of the retrieve-btn click handler
+    });
+
+    // Handle real-time search as user types in the search box
+    $("#item_search").on('input', function() {
+        let order_id = $("#item_order_id").val();
+        let search_term = $(this).val();
+        
+        if (!order_id) {
+            flash_message("Please retrieve an order first");
+            return;
+        }
+        
+        // Make AJAX call to search items
+        searchOrderItems(order_id, search_term);
+    });
+
+    // Function to search order items
+    function searchOrderItems(order_id, search_term) {
+        $("#flash_message").empty();
+        
+        let ajax = $.ajax({
+            type: "GET",
+            url: `/orders/${order_id}/items?search=${encodeURIComponent(search_term)}`,
+            contentType: "application/json",
+            data: ''
+        });
+        
+        ajax.done(function(res) {
+            // Clear previous results
+            $("#item_search_results_body").empty();
+            
+            if (res.length > 0) {
+                // Hide the "No items found" message
+                $("#no_items_found").hide();
+                
+                // Add each item to the results table
+                for (let i = 0; i < res.length; i++) {
+                    let item = res[i];
+                    let row = `<tr>
+                        <td>${item.id}</td>
+                        <td>${item.product_id}</td>
+                        <td>${item.quantity}</td>
+                        <td>$${item.price.toFixed(2)}</td>
+                    </tr>`;
+                    $("#item_search_results_body").append(row);
+                }
+            } else {
+                // Show the "No items found" message
+                $("#no_items_found").show();
+            }
+        });
+        
+        ajax.fail(function(res) {
+            console.error("Failed to search items:", res);
+            flash_message("Error searching items");
+        });
+    }
+
+    // Modify the retrieve-btn click handler to show the item search section
+    // This is done by adding code to the ajax.done function
+    $("#retrieve-btn").click(function() {
+        // The existing code remains unchanged
+        // We're just adding functionality to show the search section after a successful retrieval
+        let order_id = $("#order_id").val();
+        
+        // The original AJAX call is already defined in the retrieve-btn click handler
+        // We're just adding to the ajax.done function to show the search section
+        
+        // After the order is successfully retrieved, show the item search section
+        let originalAjax = $.ajax({
+            type: "GET",
+            url: `/orders/${order_id}`,
+            contentType: "application/json",
+            data: ''
+        });
+        
+        originalAjax.done(function(res) {
+            // Show the item search section
+            $("#order_items_search").show();
+            
+            // Clear any previous search
+            $("#item_search").val('');
+            $("#item_search_results_body").empty();
+            $("#no_items_found").hide();
+            
+            // If the order has items, populate the search results with all items initially
+            if (res.orderitems && res.orderitems.length > 0) {
+                for (let i = 0; i < res.orderitems.length; i++) {
+                    let item = res.orderitems[i];
+                    let row = `<tr>
+                        <td>${item.id}</td>
+                        <td>${item.product_id}</td>
+                        <td>${item.quantity}</td>
+                        <td>$${item.price.toFixed(2)}</td>
+                    </tr>`;
+                    $("#item_search_results_body").append(row);
+                }
+            } else {
+                // Show the "No items found" message
+                $("#no_items_found").show();
+            }
+        });
+    });
+
+    // Hide the item search section when clearing the form
+    $("#clear-btn").click(function() {
+        // Hide the item search section
+        $("#order_items_search").hide();
+    });
+
 })
