@@ -399,15 +399,37 @@ def list_orderitems(order_id):
     This endpoint will return all items associated with a specific order
     identified by the order_id in the URL path. If the order does not exist,
     a status of 204 (No Content) will be returned.
-    """
 
+    Query Parameters:
+        search (string): Search term to filter items by product_id
+    """
     app.logger.info("Request for order item list")
+
+    # Check if order exists
     order = Order.find(order_id)
     if order is None:
         return "", status.HTTP_204_NO_CONTENT
+
+    # Get search parameter if it exists
+    search_term = request.args.get("search", "")
+
+    # Get all items for the order
     orderitems = OrderItems.find_by_order_id(order_id)
-    results = [orderitem.serialize() for orderitem in orderitems]
-    app.logger.info("Returning %d order items", len(results))
+
+    # Filter items if search term is provided
+    if search_term:
+        app.logger.info(f"Filtering items with search term: {search_term}")
+        filtered_items = []
+        for item in orderitems:
+            # Convert product_id to string for comparison
+            if search_term.lower() in str(item.product_id).lower():
+                filtered_items.append(item)
+        results = [orderitem.serialize() for orderitem in filtered_items]
+        app.logger.info("Returning %d filtered order items", len(results))
+    else:
+        results = [orderitem.serialize() for orderitem in orderitems]
+        app.logger.info("Returning %d order items", len(results))
+
     return jsonify(results), status.HTTP_200_OK
 
 

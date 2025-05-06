@@ -236,8 +236,10 @@ $(function () {
         $("#item_product_id").val("");
         $("#item_quantity").val("1");
         $("#item_price").val("");
+        $("#item_id").val("");
         $("#flash_message").empty();
         $("#search_results").empty();
+        $("#items_search_results").empty();
         clear_form_data()
     });
 
@@ -575,6 +577,82 @@ $(function () {
     });
 
     // ****************************************
+    // Search for Order Items
+    // ****************************************
+
+    $("#search_items-btn").click(function () {
+        let order_id = $("#item_order_id").val();
+        let product_id = $("#item_product_id").val();
+        
+        if (!order_id) {
+            flash_message("Please enter an Order ID to search for items");
+            return;
+        }
+        
+        let queryString = "";
+        
+        // Add product_id as a search parameter if provided
+        if (product_id) {
+            queryString = `?search=${product_id}`;
+        }
+        
+        $("#flash_message").empty();
+        
+        let ajax = $.ajax({
+            type: "GET",
+            url: `/orders/${order_id}/items${queryString}`,
+            contentType: "application/json",
+            data: ''
+        });
+        
+        ajax.done(function(res) {
+            // Clear previous results
+            $("#items_search_results").empty();
+            
+            if (res.length === 0) {
+                $("#items_search_results").append('<div class="alert alert-info">No items found for this order</div>');
+                return;
+            }
+            
+            // Create the table
+            let table = '<table class="table table-striped" cellpadding="10">';
+            table += '<thead><tr>';
+            table += '<th class="col-md-1">ID</th>';
+            table += '<th class="col-md-3">Order ID</th>';
+            table += '<th class="col-md-3">Product ID</th>';
+            table += '<th class="col-md-2">Quantity</th>';
+            table += '<th class="col-md-3">Price</th>';
+            table += '</tr></thead><tbody>';
+            
+            // Add rows for each item
+            for (let i = 0; i < res.length; i++) {
+                let item = res[i];
+                table += `<tr>
+                    <td>${item.id}</td>
+                    <td>${item.order_id}</td>
+                    <td>${item.product_id}</td>
+                    <td>${item.quantity}</td>
+                    <td>$${item.price.toFixed(2)}</td>
+                </tr>`;
+            }
+            
+            table += '</tbody></table>';
+            $("#items_search_results").append(table);
+            
+            flash_message(`Found ${res.length} item(s) for Order ID: ${order_id}`);
+        });
+        
+        ajax.fail(function(res) {
+            $("#items_search_results").empty();
+            if (res.status === 204) {
+                flash_message(`Order with ID ${order_id} not found`);
+            } else {
+                flash_message("Error searching for order items: " + (res.responseJSON ? res.responseJSON.message : "Unknown error"));
+            }
+        });
+    });
+
+    // ****************************************
     // Handle Cancel Order button clicks in search results
     // ****************************************
     
@@ -617,7 +695,6 @@ $(function () {
             }
         });
     });
-
     // ****************************************
     // Edit Order Modal Functionality
     // ****************************************

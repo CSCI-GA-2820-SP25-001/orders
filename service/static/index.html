@@ -122,6 +122,7 @@
             <!-- CREATE/UPDATE ITEM BUTTONS -->
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-primary" id="search_items-btn">Search Items</button>
                 <button type="submit" class="btn btn-info" id="create_item-btn">Create Order Item</button>
                 <button type="submit" class="btn btn-warning" id="update_item-btn">Update Item Quantity</button>
               </div>
@@ -212,6 +213,21 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Order Items Search Results -->
+      <div class="table-responsive col-md-12" id="items_search_results">
+        <table class="table table-striped">
+          <thead>
+          <tr>
+            <th class="col-md-1">ID</th>
+            <th class="col-md-3">Order ID</th>
+            <th class="col-md-3">Product ID</th>
+            <th class="col-md-2">Quantity</th>
+            <th class="col-md-3">Price</th>
+          </tr>
+          </thead>
+        </table>
       </div>
 
       <footer>
