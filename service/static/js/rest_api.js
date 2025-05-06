@@ -233,8 +233,10 @@ $(function () {
         $("#item_product_id").val("");
         $("#item_quantity").val("1");
         $("#item_price").val("");
+        $("#item_id").val("");
         $("#flash_message").empty();
         $("#search_results").empty();
+        $("#items_search_results").empty();
         clear_form_data()
     });
 
@@ -569,6 +571,82 @@ $(function () {
     });
 
     // ****************************************
+    // Search for Order Items
+    // ****************************************
+
+    $("#search_items-btn").click(function () {
+        let order_id = $("#item_order_id").val();
+        let product_id = $("#item_product_id").val();
+        
+        if (!order_id) {
+            flash_message("Please enter an Order ID to search for items");
+            return;
+        }
+        
+        let queryString = "";
+        
+        // Add product_id as a search parameter if provided
+        if (product_id) {
+            queryString = `?search=${product_id}`;
+        }
+        
+        $("#flash_message").empty();
+        
+        let ajax = $.ajax({
+            type: "GET",
+            url: `/orders/${order_id}/items${queryString}`,
+            contentType: "application/json",
+            data: ''
+        });
+        
+        ajax.done(function(res) {
+            // Clear previous results
+            $("#items_search_results").empty();
+            
+            if (res.length === 0) {
+                $("#items_search_results").append('<div class="alert alert-info">No items found for this order</div>');
+                return;
+            }
+            
+            // Create the table
+            let table = '<table class="table table-striped" cellpadding="10">';
+            table += '<thead><tr>';
+            table += '<th class="col-md-1">ID</th>';
+            table += '<th class="col-md-3">Order ID</th>';
+            table += '<th class="col-md-3">Product ID</th>';
+            table += '<th class="col-md-2">Quantity</th>';
+            table += '<th class="col-md-3">Price</th>';
+            table += '</tr></thead><tbody>';
+            
+            // Add rows for each item
+            for (let i = 0; i < res.length; i++) {
+                let item = res[i];
+                table += `<tr>
+                    <td>${item.id}</td>
+                    <td>${item.order_id}</td>
+                    <td>${item.product_id}</td>
+                    <td>${item.quantity}</td>
+                    <td>$${item.price.toFixed(2)}</td>
+                </tr>`;
+            }
+            
+            table += '</tbody></table>';
+            $("#items_search_results").append(table);
+            
+            flash_message(`Found ${res.length} item(s) for Order ID: ${order_id}`);
+        });
+        
+        ajax.fail(function(res) {
+            $("#items_search_results").empty();
+            if (res.status === 204) {
+                flash_message(`Order with ID ${order_id} not found`);
+            } else {
+                flash_message("Error searching for order items: " + (res.responseJSON ? res.responseJSON.message : "Unknown error"));
+            }
+        });
+    });
+
+    // ****************************************
     // Handle Cancel Order button clicks in search results
     // ****************************************
     
@@ -611,123 +689,4 @@ $(function () {
             }
         });
     });
-
-    // ****************************************
-    // Search for Items within an Order
-    // ****************************************
-
-    // Show the item search section when an order is retrieved
-    $("#retrieve-btn").click(function() {
-        // The search section will be shown after the order is successfully retrieved
-        // This is handled in the ajax.done function of the retrieve-btn click handler
-    });
-
-    // Handle real-time search as user types in the search box
-    $("#item_search").on('input', function() {
-        let order_id = $("#item_order_id").val();
-        let search_term = $(this).val();
-        
-        if (!order_id) {
-            flash_message("Please retrieve an order first");
-            return;
-        }
-        
-        // Make AJAX call to search items
-        searchOrderItems(order_id, search_term);
-    });
-
-    // Function to search order items
-    function searchOrderItems(order_id, search_term) {
-        $("#flash_message").empty();
-        
-        let ajax = $.ajax({
-            type: "GET",
-            url: `/orders/${order_id}/items?search=${encodeURIComponent(search_term)}`,
-            contentType: "application/json",
-            data: ''
-        });
-        
-        ajax.done(function(res) {
-            // Clear previous results
-            $("#item_search_results_body").empty();
-            
-            if (res.length > 0) {
-                // Hide the "No items found" message
-                $("#no_items_found").hide();
-                
-                // Add each item to the results table
-                for (let i = 0; i < res.length; i++) {
-                    let item = res[i];
-                    let row = `<tr>
-                        <td>${item.id}</td>
-                        <td>${item.product_id}</td>
-                        <td>${item.quantity}</td>
-                        <td>$${item.price.toFixed(2)}</td>
-                    </tr>`;
-                    $("#item_search_results_body").append(row);
-                }
-            } else {
-                // Show the "No items found" message
-                $("#no_items_found").show();
-            }
-        });
-        
-        ajax.fail(function(res) {
-            console.error("Failed to search items:", res);
-            flash_message("Error searching items");
-        });
-    }
-
-    // Modify the retrieve-btn click handler to show the item search section
-    // This is done by adding code to the ajax.done function
-    $("#retrieve-btn").click(function() {
-        // The existing code remains unchanged
-        // We're just adding functionality to show the search section after a successful retrieval
-        let order_id = $("#order_id").val();
-        
-        // The original AJAX call is already defined in the retrieve-btn click handler
-        // We're just adding to the ajax.done function to show the search section
-        
-        // After the order is successfully retrieved, show the item search section
-        let originalAjax = $.ajax({
-            type: "GET",
-            url: `/orders/${order_id}`,
-            contentType: "application/json",
-            data: ''
-        });
-        
-        originalAjax.done(function(res) {
-            // Show the item search section
-            $("#order_items_search").show();
-            
-            // Clear any previous search
-            $("#item_search").val('');
-            $("#item_search_results_body").empty();
-            $("#no_items_found").hide();
-            
-            // If the order has items, populate the search results with all items initially
-            if (res.orderitems && res.orderitems.length > 0) {
-                for (let i = 0; i < res.orderitems.length; i++) {
-                    let item = res.orderitems[i];
-                    let row = `<tr>
-                        <td>${item.id}</td>
-                        <td>${item.product_id}</td>
-                        <td>${item.quantity}</td>
-                        <td>$${item.price.toFixed(2)}</td>
-                    </tr>`;
-                    $("#item_search_results_body").append(row);
-                }
-            } else {
-                // Show the "No items found" message
-                $("#no_items_found").show();
-            }
-        });
-    });
-
-    // Hide the item search section when clearing the form
-    $("#clear-btn").click(function() {
-        // Hide the item search section
-        $("#order_items_search").hide();
-    });
-
 })
