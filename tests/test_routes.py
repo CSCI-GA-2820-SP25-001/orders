@@ -519,3 +519,100 @@ class TestYourResourceService(TestCase):
                 status.HTTP_409_CONFLICT,
                 msg=f"Expected 409 when canceling order with status '{non_pending_status}'",
             )
+
+    def test_get_orderitem_mismatched_order_id(self):
+        """It should return 400 when order_id in path doesn't match order_id in item"""
+        # Create an order
+        order1 = OrderFactory()
+        order1.create()
+
+        # Create another order
+        order2 = OrderFactory()
+        order2.create()
+
+        # Create an order item for order1
+        orderitem = OrderItemsFactory(order=order1)
+        orderitem.create()
+
+        # Try to access the item using order2's ID
+        resp = self.client.get(f"/orders/{order2.id}/items/{orderitem.id}")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_order_with_missing_fields(self):
+        """It should update an order with missing fields by using defaults"""
+        # Create an order
+        order = OrderFactory()
+        order.create()
+
+        # Update with minimal data
+        update_data = {"customer_id": 999, "order_status": "updated"}
+
+        resp = self.client.put(f"/orders/{order.id}", json=update_data)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Verify the update
+        updated_order = Order.find(order.id)
+        self.assertEqual(updated_order.customer_id, 999)
+        self.assertEqual(updated_order.order_status, "updated")
+        self.assertIsNotNone(updated_order.order_created)
+        self.assertIsNotNone(updated_order.order_updated)
+
+    def test_update_item_with_invalid_quantity(self):
+        """It should return 400 when updating an item with invalid quantity"""
+        # Create an order
+        order = OrderFactory()
+        order.create()
+
+        # Create an order item
+        orderitem = OrderItemsFactory(order=order)
+        orderitem.create()
+
+        # Try to update with invalid quantity
+        update_data = {
+            "order_id": order.id,
+            "product_id": orderitem.product_id,
+            "price": orderitem.price,
+            "quantity": -5,  # Invalid quantity
+        }
+
+        resp = self.client.put(
+            f"/orders/{order.id}/items/{orderitem.id}", json=update_data
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Quantity must be a positive integer", resp.get_json()["message"])
+
+    def test_list_orderitems_with_search(self):
+        """It should filter order items based on search term"""
+        # Create an order
+        order = OrderFactory()
+        order.create()
+
+        # Create order items with different product IDs
+        item1 = OrderItemsFactory(order=order, product_id=123)
+        item1.create()
+
+        item2 = OrderItemsFactory(order=order, product_id=456)
+        item2.create()
+
+        # Search for items with product_id containing "12"
+        resp = self.client.get(f"/orders/{order.id}/items?search=12")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["product_id"], 123)
+
+        # Search for items with product_id containing "4"
+        resp = self.client.get(f"/orders/{order.id}/items?search=4")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["product_id"], 456)
+
+        # Search with no matches
+        resp = self.client.get(f"/orders/{order.id}/items?search=999")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data), 0)
