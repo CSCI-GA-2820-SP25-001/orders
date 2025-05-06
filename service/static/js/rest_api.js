@@ -140,10 +140,13 @@ $(function () {
             let created = res.order_created ? res.order_created.split('T')[0] : "";
             let updated = res.order_updated ? res.order_updated.split('T')[0] : "";
             
-            // Add a cancel button if the order is in pending status
+            // Add action buttons if the order is in pending status
             let actionButtons = '';
             if (res.order_status.toLowerCase() === 'pending') {
-                actionButtons = `<button class="btn btn-danger btn-sm cancel-order-btn" data-id="${res.id}">Cancel Order</button>`;
+                actionButtons = `
+                    <button class="btn btn-primary btn-sm edit-order-btn" data-id="${res.id}">Edit Order</button>
+                    <button class="btn btn-danger btn-sm cancel-order-btn" data-id="${res.id}">Cancel Order</button>
+                `;
             } else {
                 actionButtons = `<em>No actions available</em>`;
             }
@@ -444,10 +447,13 @@ $(function () {
                 
                 row += '</td>';
                 
-                // Add a cancel button if the order is in pending status
+                // Add action buttons if the order is in pending status
                 let actionButtons = '';
                 if (order.order_status.toLowerCase() === 'pending') {
-                    actionButtons = `<button class="btn btn-danger btn-sm cancel-order-btn" data-id="${order.id}">Cancel Order</button>`;
+                    actionButtons = `
+                        <button class="btn btn-primary btn-sm edit-order-btn" data-id="${order.id}">Edit Order</button>
+                        <button class="btn btn-danger btn-sm cancel-order-btn" data-id="${order.id}">Cancel Order</button>
+                    `;
                 } else {
                     actionButtons = `<em>No actions available</em>`;
                 }
@@ -689,4 +695,205 @@ $(function () {
             }
         });
     });
+    // ****************************************
+    // Edit Order Modal Functionality
+    // ****************************************
+    
+    // Global variable to store the current order being edited
+    let currentEditOrder = null;
+    
+    // Function to update the edit order flash message
+    function edit_order_flash_message(message) {
+        $("#edit-order-flash-message").empty();
+        $("#edit-order-flash-message").append(message);
+    }
+    
+    // Function to refresh the items list in the edit order modal
+    function refreshEditOrderItemsList() {
+        if (!currentEditOrder || !currentEditOrder.orderitems) {
+            return;
+        }
+        
+        let itemsList = $("#edit-order-items-list");
+        itemsList.empty();
+        
+        if (currentEditOrder.orderitems.length === 0) {
+            itemsList.append('<p><em>No items in this order</em></p>');
+            return;
+        }
+        
+        let table = '<table class="table table-bordered table-sm">';
+        table += '<thead><tr><th>ID</th><th>Product ID</th><th>Quantity</th><th>Price</th><th>Actions</th></tr></thead>';
+        table += '<tbody>';
+        
+        for (let i = 0; i < currentEditOrder.orderitems.length; i++) {
+            let item = currentEditOrder.orderitems[i];
+            table += `<tr>
+                <td>${item.id}</td>
+                <td>${item.product_id}</td>
+                <td>${item.quantity}</td>
+                <td>$${item.price.toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-danger btn-xs remove-item-btn" data-id="${item.id}">Remove</button>
+                </td>
+            </tr>`;
+        }
+        
+        table += '</tbody></table>';
+        itemsList.append(table);
+    }
+    
+    // Handle Edit Order button clicks
+    $(document).on('click', '.edit-order-btn', function() {
+        let order_id = $(this).data('id');
+        
+        // Fetch the order details
+        let ajax = $.ajax({
+            type: "GET",
+            url: `/orders/${order_id}`,
+            contentType: "application/json",
+            data: ''
+        });
+        
+        ajax.done(function(res) {
+            // Store the current order being edited
+            currentEditOrder = res;
+            
+            // Populate the modal with order details
+            $("#edit-order-id").text(res.id);
+            $("#edit-customer-id").text(res.customer_id);
+            $("#edit-order-status").text(res.order_status);
+            
+            // Refresh the items list
+            refreshEditOrderItemsList();
+            
+            // Clear the add new item form
+            $("#new-product-id").val("");
+            $("#new-quantity").val("1");
+            $("#new-price").val("");
+            
+            // Clear any previous flash messages
+            edit_order_flash_message("");
+            
+            // Show the modal
+            $("#edit-order-modal").modal('show');
+        });
+        
+        ajax.fail(function(res) {
+            flash_message("Failed to retrieve order details. Please try again.");
+        });
+    });
+    
+    // Handle Remove Item button clicks in the edit order modal
+    $(document).on('click', '.remove-item-btn', function() {
+        let item_id = $(this).data('id');
+        let order_id = currentEditOrder.id;
+        
+        // Confirm before removing
+        if (!confirm("Are you sure you want to remove this item from the order?")) {
+            return;
+        }
+        
+        // Send DELETE request to remove the item
+        let ajax = $.ajax({
+            type: "DELETE",
+            url: `/orders/${order_id}/items/${item_id}`,
+            contentType: "application/json",
+            data: ''
+        });
+        
+        ajax.done(function() {
+            // Remove the item from the currentEditOrder object
+            currentEditOrder.orderitems = currentEditOrder.orderitems.filter(item => item.id !== parseInt(item_id));
+            
+            // Refresh the items list
+            refreshEditOrderItemsList();
+            
+            edit_order_flash_message("Item removed successfully");
+        });
+        
+        ajax.fail(function(res) {
+            edit_order_flash_message("Failed to remove item. Please try again.");
+        });
+    });
+    
+    // Handle Add New Item button click in the edit order modal
+    $("#add-new-item-btn").click(function() {
+        let order_id = currentEditOrder.id;
+        let product_id = $("#new-product-id").val();
+        let quantity = $("#new-quantity").val();
+        let price = $("#new-price").val();
+        
+        // Validate inputs
+        if (!product_id) {
+            edit_order_flash_message("Product ID is required");
+            return;
+        }
+        
+        if (!quantity || quantity < 1) {
+            edit_order_flash_message("Quantity must be at least 1");
+            return;
+        }
+        
+        if (!price || price <= 0) {
+            edit_order_flash_message("Price must be greater than 0");
+            return;
+        }
+        
+        let data = {
+            "product_id": parseInt(product_id),
+            "quantity": parseInt(quantity),
+            "price": parseFloat(price)
+        };
+        
+        // Send POST request to add the item
+        let ajax = $.ajax({
+            type: "POST",
+            url: `/orders/${order_id}/items`,
+            contentType: "application/json",
+            data: JSON.stringify(data)
+        });
+        
+        ajax.done(function(res) {
+            // Add the new item to the currentEditOrder object
+            currentEditOrder.orderitems.push(res);
+            
+            // Refresh the items list
+            refreshEditOrderItemsList();
+            
+            // Clear the form
+            $("#new-product-id").val("");
+            $("#new-quantity").val("1");
+            $("#new-price").val("");
+            
+            edit_order_flash_message("Item added successfully");
+        });
+        
+        ajax.fail(function(res) {
+            if (res.status === 400) {
+                edit_order_flash_message("Invalid input. Please check your values.");
+            } else if (res.status === 404) {
+                edit_order_flash_message("Order not found");
+            } else {
+                edit_order_flash_message("Failed to add item. Please try again.");
+            }
+        });
+    });
+    
+    // Handle Save Changes button click in the edit order modal
+    $("#save-order-changes-btn").click(function() {
+        // Close the modal
+        $("#edit-order-modal").modal('hide');
+        
+        // Refresh the order display to show the updated items
+        if ($("#order_id").val() == currentEditOrder.id) {
+            $("#retrieve-btn").click();
+        } else {
+            // If we're in search results, refresh the search
+            $("#search-btn").click();
+        }
+        
+        flash_message("Order updated successfully");
+    });
+
 })
